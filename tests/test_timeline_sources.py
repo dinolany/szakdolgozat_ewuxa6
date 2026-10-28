@@ -35,7 +35,7 @@ class TimelineSelectorTest(unittest.TestCase):
         self.assertEqual(selector.source, "real")
         synthetic = next(s for s in selector.available() if s["name"] == "synthetic")
         self.assertFalse(synthetic["available"])
-        self.assertIn("build_synthetic.py", synthetic["hint"])
+        self.assertIn("simulation.synthetic.build_synthetic", synthetic["hint"])
         with self.assertRaises(ValueError):
             selector.select("synthetic")
 
