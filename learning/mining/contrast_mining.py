@@ -13,18 +13,98 @@ alaparánynál. Lépései:
 """
 
 from collections import defaultdict
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from datetime import datetime
 import itertools
 import math
-from typing import Dict, FrozenSet, Iterable, List, Optional, Sequence, Set, Tuple
+from typing import Any, Dict, FrozenSet, Iterable, List, Optional, Sequence, Set, Tuple
 
 from learning.mining.measure_def import MeasureDef
-from learning.mining.mining_params import MiningParams
-from learning.mining.pattern import Item, Pattern, pattern_key
-from learning.mining.pattern_result import PatternResult
 from learning.mining.profiles import DISPLAY_ONLY_DIMENSIONS, dimension_items
 from learning.mining.ticket_profile import TicketProfile
+
+
+Item = Tuple[str, str]
+
+
+Pattern = Tuple[Item, ...]
+
+
+def pattern_key(items: Iterable[Item]) -> str:
+    """A minta kanonikus kulcsa: rendezett 'dimenzió=érték' párok '&'-tel.
+
+    Hívja: DiscoveryManager.ingest_signals, DiscoveryService._refinements, DiscoveryService.knowledge_overview,
+    PatternFindingDiagnosis.observe_definition, PatternResult.alternative_keys, PatternResult.key,
+    rule.match_rule, contrast_mining.mine, pattern_finding_diagnosis.finding_subject."""
+    return "&".join(f"{dimension}={value}" for dimension, value in sorted(items))
+
+
+@dataclass(frozen=True)
+class MiningParams:
+    max_order: int = 2              # legfeljebb ennyi dimenzióérték egy mintában
+    min_support: int = 3            # legalább ennyi rossz ticket a mintában (csak ezek tesztelődnek)
+    min_lift: float = 2.0           # a mintabeli arány legalább ennyiszerese az alaparánynak
+    fdr_q: float = 0.10             # elfogadott hamis felfedezési arány (Benjamini–Hochberg)
+    min_improvement: float = 1.2    # összetett minta: ennyivel nagyobb lift kell minden részmintájánál
+    explained_share: float = 0.8    # általános minta kiesik, ha rossz ticketjeinek ekkora részét egy szűkítése lefedi
+    min_distinct_days: int = 1      # ismétlődő időbeli mintánál (hét napja / óra) ennyi különböző nap kell
+    top_n: int = 50
+    # Dimenziók szerepe: a kizártakat a kereső nem használja; a "csak szűkítő" (pl. impact, alkategória:
+    # alapmezők, amelyeket alig állít bárki) önmagában nem minta, és kombinációban is csak akkor marad,
+    # ha a nélküle vett mintánál legalább `suppressed_improvement`-szer erősebb
+    excluded: FrozenSet[str] = frozenset()
+    suppressed: FrozenSet[str] = frozenset()
+    suppressed_improvement: float = 1.5
+    # Kiemelt dimenziók (pl. business_service): egyelemes mintáik külön FDR-családban, saját szinttel
+    emphasized: FrozenSet[str] = frozenset()
+    emphasized_fdr_q: float = 0.05
+    # tanult zsákutca bontási utak: (szülő mezőfajtája, bontó mező); a kontextusok ilyen gyerekei nem jelöltek
+    blocked_paths: FrozenSet[Tuple[str, str]] = frozenset()
+
+
+@dataclass(frozen=True)
+class PatternResult:
+    measure: str
+    items: Pattern
+    bad_count: int           # rossz egységek (ticketek vagy szakaszok) száma
+    group_size: int
+    population: int
+    base_rate: float
+    rate: float
+    lift: float
+    expected: float          # várható rossz ticketszám alaparány mellett
+    excess: float            # többlet rossz ticket a várthoz képest
+    p_value: float
+    q_value: float           # FDR-korrigált p-érték
+    distinct_days: int       # hány különböző napon fordult elő rossz ticket a mintában
+    bad_incident_ids: Tuple[str, ...]
+    # Más minták, amelyek pontosan ugyanezt a rossz ticket-halmazt írják le (összevonva)
+    alternatives: Tuple[Pattern, ...] = ()
+    # contrast: a többi egységhez képest kiugró (mine); trend: a saját múltjához képest romlott (trend.py)
+    kind: str = "contrast"
+    extra: Optional[Dict[str, Any]] = None   # fajtától függő többletadat (pl. a múltbeli arány, a kontextus)
+
+    @property
+    def key(self) -> str:
+        """A minta kulcsa (mező=érték&…).
+
+        Hívja: PatternResult.candidate_key (átadva)."""
+        return pattern_key(self.items)
+
+    @property
+    def candidate_key(self) -> str:
+        """A jelölt azonosításának kulcsa: ugyanaz a minta más fajtaként külön jelölt."""
+        return self.key if self.kind == "contrast" else f"{self.kind}|{self.key}"
+
+    @property
+    def alternative_keys(self) -> Tuple[str, ...]:
+        """Az ugyanazt az esethalmazt leíró további minták kulcsai."""
+        return tuple(pattern_key(items) for items in self.alternatives)
+
+    @property
+    def dimensions(self) -> Set[str]:
+        """A minta mezői."""
+        return {dimension for dimension, _ in self.items}
 
 
 # Egy mintában egymást kizáró dimenziók (a dátum meghatározza a hét napját)

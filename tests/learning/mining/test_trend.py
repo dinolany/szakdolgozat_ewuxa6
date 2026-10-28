@@ -5,8 +5,7 @@ import unittest
 
 from learning import MEASURES_BY_KEY
 from learning.discovery_manager import DiscoveryManager
-from learning.mining.trend import mine_trends
-from learning.mining.trend_params import TrendParams
+from learning.mining.trend import TrendParams, mine_trends
 from learning.state.candidate import make_candidate_id
 from tests.support.profile_fixtures import make_profile
 

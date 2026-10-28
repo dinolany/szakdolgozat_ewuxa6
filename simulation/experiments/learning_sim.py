@@ -28,11 +28,9 @@ from learning.discovery_manager import DiscoveryManager
 from learning.feedback.generalize import suggestions as generalization_suggestions
 from learning.mining.contrast_mining import with_implied
 from learning.runner import configure, run_discovery
-from learning.state.candidate import Candidate
-from learning.state.candidate_state import CandidateState
+from learning.state.candidate import Candidate, CandidateState
+from learning.state.decision import Scope, Verdict
 from learning.state.rule import Rule
-from learning.state.scope import Scope
-from learning.state.verdict import Verdict
 from model.diagnostics.core import MeasurementContext, Trigger
 from model.diagnostics.detectors.feature_usage.feature_usage_diagnosis import FeatureUsageDiagnosis
 from model.knowledge.knowledge_view import KnowledgeView

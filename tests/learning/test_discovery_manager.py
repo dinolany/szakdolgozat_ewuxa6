@@ -3,10 +3,8 @@ from datetime import datetime, timedelta
 import unittest
 
 from learning.discovery_manager import DiscoveryManager
-from learning.state.candidate import make_candidate_id
-from learning.state.candidate_state import CandidateState
-from learning.state.scope import Scope
-from learning.state.verdict import Verdict
+from learning.state.candidate import CandidateState, make_candidate_id
+from learning.state.decision import Scope, Verdict
 from tests.support.cluster_fixtures import G, G_H10, G_SUN, H_SUN
 from tests.support.diagnostic_fixtures import L1
 from tests.support.finding_fixtures import candidate

@@ -24,10 +24,8 @@ from learning.mining.measures import MEASURES_BY_KEY
 from learning.pattern_finding_diagnosis import PatternFindingDiagnosis
 from learning.promotion import promote_finding
 from learning.runner import backfill_counts, configure, run_discovery
-from learning.state.candidate import Candidate
-from learning.state.candidate_state import CandidateState
-from learning.state.scope import Scope
-from learning.state.verdict import Verdict
+from learning.state.candidate import Candidate, CandidateState
+from learning.state.decision import Scope, Verdict
 from model.diagnostics.core import MeasurementContext, Trigger, parse_timestamp
 from model.diagnostics.detectors.feature_usage.feature_usage_diagnosis import FeatureUsageDiagnosis
 from model.history_line import HistoryLine

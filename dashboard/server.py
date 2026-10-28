@@ -1,8 +1,8 @@
-from config.paths import DATA_DIR
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 import threading
 
+from config.paths import DATA_DIR
 from dashboard.dashboard_service import DashboardService
 from dashboard.request_handler import DashboardHandler
 

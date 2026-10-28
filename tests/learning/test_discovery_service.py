@@ -9,9 +9,8 @@ from engine.analyzer import IncidentAnalyzer
 from engine.event_processor import IncidentEventProcessor
 from engine.issue_manager import IssueManager
 from learning.discovery_service import DiscoveryService
-from learning.state.candidate_state import CandidateState
-from learning.state.scope import Scope
-from learning.state.verdict import Verdict
+from learning.state.candidate import CandidateState
+from learning.state.decision import Scope, Verdict
 from model.issue import Issue
 from model.issue_state import IssueState
 from storage.incident_repository import IncidentRepository

@@ -1,8 +1,9 @@
 # loader.py
-from config.paths import DATA_DIR
 import os
 import pandas as pd
 from typing import Any, Dict, List
+
+from config.paths import DATA_DIR
 
 
 def excel_fingerprint(excel_path: str = str(DATA_DIR / "data.xlsx")) -> str | None:

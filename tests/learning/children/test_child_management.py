@@ -4,8 +4,8 @@ import unittest
 
 from learning.children.child_def import ChildDef, trigger_matches, trigger_options
 from learning.discovery_manager import DiscoveryManager
-from learning.state.candidate_state import CandidateState
-from learning.state.verdict import Verdict
+from learning.state.candidate import CandidateState
+from learning.state.decision import Verdict
 from tests.support.child_fixtures import AS_OF, IMMEDIATE, START, quick_close, signal
 from tests.support.manager_fixtures import DAY, cid, ingest, result
 from tests.support.profile_fixtures import make_incident

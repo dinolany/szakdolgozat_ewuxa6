@@ -21,8 +21,8 @@ tudás visszahat a mintakeresésre és a detektorokra is.
 
 ### 2.1 Könyvtárszerkezet
 
-Minden logikai modul külön csomag; egy fájlban egy osztály van (a kis, egy osztályhoz tartozó segédfüggvények és
-konstansok vele együtt). A tiszta számoló modulok (pl. a mintakeresés) függvénymodulok, témánként almappában.
+Minden logikai modul külön csomag; egy fájlban egy fő osztály van, mellette csak a hozzá tartozó kis típusok
+(enumok, paraméter- és eredménytípusok), segédfüggvények és konstansok. A tiszta számoló modulok (pl. a mintakeresés) függvénymodulok, témánként almappában.
 
 ```
 main.py                     indítás: a komponensek példányosítása és összekötése
@@ -400,11 +400,11 @@ flowchart TB
 | `discovery_manager.py` (+ `ingest_report.py`) | A tanulási állapot (`{candidates, decisions, rules, meta}`) kezelése: jelöltek fogadása, szabályok alkalmazása, tipp (súlyozott legközelebbi szomszéd), prioritás, döntések, almérések tárolása, bontási tudás, csatolás. Nem tud fájlról és adatbázisról. |
 | `runner.py`, `discovery_config.py` | A napi feltárás összerakása; a paraméterek (`config/discovery.json`). |
 | `promotion.py`, `pattern_finding_diagnosis.py` | Az elfogadott mintából PATTERN_FINDING issue, és a detektor, amely az elfogadott mintákat folyamatosan újraméri. |
-| `state/` | Az adatmodell: `Candidate`, `Decision`, `Rule` (+ `match_rule`, a szabályillesztés), és az állapotok, ítéletek, hatókörök felsorolásai. |
+| `state/` | Az adatmodell, három fájlban: `candidate.py` (`Candidate`, `CandidateState`), `decision.py` (`Decision`, `Verdict`, `Scope`), `rule.py` (`Rule`, `RuleKind`, `RuleAction`, és a szabályillesztés: `match_rule`). |
 | `mining/profiles.py`, `ticket_profile.py`, `profile_set.py` | Ticket- és szakasz-adatlapok egy pillanatra, munkaidővel és keresési szempontként használt almérésekkel. |
 | `mining/measures.py`, `measure_def.py` | A mérési katalógus. |
-| `mining/contrast_mining.py` (+ `pattern.py`, `pattern_result.py`, `mining_params.py`) | Kontrasztminta-keresés (subgroup discovery): legfeljebb 2 elemű kombinációk, egyoldali binomiális próba, Benjamini–Hochberg FDR, külön családban a kontextusok (tovább bontott minták belseje) és a kiemelt mezők; a lefedett általánosabb minták kiesnek; a tiltott bontási utak nem jönnek. |
-| `mining/trend.py` (+ `trend_params.py`) | Romlás a saját múlthoz képest, a populáció változásával korrigálva. |
+| `mining/contrast_mining.py` (a mintatípussal, `MiningParams`-szal és `PatternResult`-tal együtt) | Kontrasztminta-keresés (subgroup discovery): legfeljebb 2 elemű kombinációk, egyoldali binomiális próba, Benjamini–Hochberg FDR, külön családban a kontextusok (tovább bontott minták belseje) és a kiemelt mezők; a lefedett általánosabb minták kiesnek; a tiltott bontási utak nem jönnek. |
+| `mining/trend.py` (a `TrendParams`-szal együtt) | Romlás a saját múlthoz képest, a populáció változásával korrigálva. |
 | `mining/baseline.py`, `mining/clusters.py` | Ismert eltérés: a minta saját normája; közös részminták (családok) és hatókör. |
 | `analysis/candidate_analysis.py` | Egy jelölt elemzése (összegzés, „mi köti össze”, napi arány, eloszlás, esetek), a kártya-összefoglaló, a „Mi jellemző még?” bontás. |
 | `analysis/backlog.py` | A backlog-naptár adatai. |

@@ -1,8 +1,8 @@
-from config.paths import DATA_DIR
 from dataclasses import replace
 from datetime import datetime
 from typing import Any, Dict, Iterable, List
 
+from config.paths import DATA_DIR
 from engine.issue_manager import IssueManager
 from learning.pattern_finding_diagnosis import PatternFindingDiagnosis
 from model.diagnostics.core import Trigger, parse_timestamp

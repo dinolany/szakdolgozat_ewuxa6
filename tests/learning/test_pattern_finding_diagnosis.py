@@ -5,8 +5,7 @@ import unittest
 from engine.issue_manager import IssueManager
 from learning.pattern_finding_diagnosis import PatternFindingDiagnosis
 from learning.promotion import promote_finding
-from learning.state.candidate import Candidate, make_candidate_id
-from learning.state.candidate_state import CandidateState
+from learning.state.candidate import Candidate, CandidateState, make_candidate_id
 from model.diagnostics.core import MeasurementContext, Trigger
 from model.issue import Issue
 from model.issue_state import IssueState

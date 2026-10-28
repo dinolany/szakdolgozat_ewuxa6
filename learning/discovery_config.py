@@ -4,10 +4,10 @@ from typing import Any, Dict, List, Optional
 
 from learning.children.child_review import ChildReviewParams
 from learning.feedback.review_params import ReviewParams
+from learning.mining.contrast_mining import MiningParams
 from learning.mining.measure_def import MeasureDef
 from learning.mining.measures import MEASURES
-from learning.mining.mining_params import MiningParams
-from learning.mining.trend_params import TREND_DIMENSIONS, TrendParams
+from learning.mining.trend import TREND_DIMENSIONS, TrendParams
 from model.diagnostics.core.parameter_def import ParameterDef, resolve_params
 
 

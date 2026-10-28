@@ -1,15 +1,24 @@
 from dataclasses import asdict, dataclass, field
+from enum import Enum
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 
-from learning.mining.contrast_mining import with_implied
+from learning.mining.contrast_mining import pattern_key, with_implied
 from learning.mining.measures import MEASURES_BY_KEY
-from learning.mining.pattern import pattern_key
 from learning.state.candidate import Candidate
-from learning.state.rule_action import RuleAction
 from model.diagnostics.core.suppression import conditions_match, values_of
 from model.knowledge.fact import Fact
 from model.knowledge.predicates import PREDICATES
 from model.knowledge.rule_state import RuleState
+
+
+class RuleAction(str, Enum):
+    DROP = "drop"
+    BOOST = "boost"
+
+
+class RuleKind(str, Enum):
+    REJECTION = "rejection"  # elvetett minta
+    KNOWLEDGE = "knowledge"  # tényre épülő szakmai tudás
 
 
 @dataclass

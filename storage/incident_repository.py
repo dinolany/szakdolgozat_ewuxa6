@@ -1,4 +1,3 @@
-from config.paths import DATA_DIR
 from contextlib import contextmanager
 from enum import Enum
 import json
@@ -8,6 +7,7 @@ import threading
 import time
 from typing import Any, Dict, Iterator, Optional
 
+from config.paths import DATA_DIR
 from model.incident import Incident
 from model.issue import Issue
 from storage.errors import DatabaseCorruptedError, DatabaseIOError

@@ -15,17 +15,10 @@ from learning.children.expression_language import compile_expression
 from learning.ingest_report import IngestReport
 from learning.mining.baseline import compare_to_baseline, freeze_baseline, non_overlapping
 from learning.mining.clusters import find_clusters, reach
-from learning.mining.contrast_mining import with_implied
-from learning.mining.pattern import pattern_key
-from learning.mining.pattern_result import PatternResult
-from learning.state.candidate import Candidate, make_candidate_id
-from learning.state.candidate_state import CandidateState
-from learning.state.decision import Decision
-from learning.state.rule import Rule, match_rule
-from learning.state.rule_action import RuleAction
-from learning.state.rule_kind import RuleKind
-from learning.state.scope import Scope
-from learning.state.verdict import Verdict
+from learning.mining.contrast_mining import PatternResult, pattern_key, with_implied
+from learning.state.candidate import Candidate, CandidateState, make_candidate_id
+from learning.state.decision import Decision, Scope, Verdict
+from learning.state.rule import Rule, RuleAction, RuleKind, match_rule
 from model.knowledge.fact import Fact
 from model.knowledge.knowledge_view import KnowledgeView
 from model.knowledge.predicates import NEM_DOLGOZIK, PREDICATES

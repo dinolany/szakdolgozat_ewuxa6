@@ -10,9 +10,8 @@ A minták definíciója (mérés, mezőérték-párok, rossz-küszöb) a diagnos
 from datetime import datetime
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
 
-from learning.mining.contrast_mining import binomial_sf
+from learning.mining.contrast_mining import binomial_sf, pattern_key
 from learning.mining.measures import MEASURES_BY_KEY
-from learning.mining.pattern import pattern_key
 from learning.mining.profile_set import ProfileSet
 from learning.mining.profiles import build_profiles, has_value
 from learning.mining.ticket_profile import TicketProfile

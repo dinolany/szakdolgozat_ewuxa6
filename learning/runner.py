@@ -6,14 +6,12 @@ from learning.discovery_config import BASELINE_SECTION, DiscoveryConfig, QUEUE_S
 from learning.discovery_manager import DiscoveryManager
 from learning.ingest_report import IngestReport
 from learning.mining.baseline import pattern_counts
-from learning.mining.contrast_mining import mine
+from learning.mining.contrast_mining import PatternResult, mine
 from learning.mining.measures import MEASURES, MEASURES_BY_KEY
-from learning.mining.pattern_result import PatternResult
 from learning.mining.profile_set import ProfileSet
 from learning.mining.profiles import build_profiles
 from learning.mining.trend import mine_trends
-from learning.state.candidate import Candidate, make_candidate_id
-from learning.state.candidate_state import CandidateState
+from learning.state.candidate import Candidate, CandidateState, make_candidate_id
 from model.incident import Incident
 
 

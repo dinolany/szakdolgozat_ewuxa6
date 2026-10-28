@@ -3,8 +3,7 @@
 Használja: learning/test_discovery_manager.py, learning/test_pattern_finding_diagnosis.py."""
 from datetime import datetime, timedelta
 
-from learning.state.candidate import Candidate, make_candidate_id
-from learning.state.candidate_state import CandidateState
+from learning.state.candidate import Candidate, CandidateState, make_candidate_id
 from tests.support.profile_fixtures import make_incident
 
 

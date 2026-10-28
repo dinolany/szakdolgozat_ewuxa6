@@ -1,5 +1,19 @@
 from dataclasses import asdict, dataclass, field
+from enum import Enum
 from typing import Any, Dict, Mapping, Optional
+
+
+class Scope(str, Enum):
+    THIS_OCCURRENCE = "this_occurrence"
+    THIS_PATTERN = "this_pattern"
+    RULE = "rule"
+
+
+class Verdict(str, Enum):
+    FINDING = "finding"
+    NOT_FINDING = "not_finding"
+    KNOWN_DEVIATION = "known_deviation"
+    REFINE = "refine"                # a minta önmagában nem finding, de ezen belül keressen tovább
 
 
 @dataclass

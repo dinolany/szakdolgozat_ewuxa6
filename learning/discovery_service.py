@@ -9,13 +9,13 @@ tudástárat, és a fő elemzővel együtt dolgozik:
 Minden művelet a szolgáltatás zárja alatt fut, és utána menti az állapotot.
 """
 
-from config.paths import CONFIG_DIR, DATA_DIR
 from datetime import datetime, timedelta
 import json
 from pathlib import Path
 import threading
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Tuple
 
+from config.paths import CONFIG_DIR, DATA_DIR
 from learning.analysis.backlog import affected_arrivals as backlog_affected, calendar as backlog_cells, candidate_groups as backlog_candidate_groups, group_stints as backlog_group_stints, time_marks as backlog_time_marks
 from learning.analysis.candidate_analysis import DIMENSION_LABELS, _value_text, analyze_candidate, breakdown, brief, describe_condition
 from learning.children.child_def import ChildDef, ROLES as CHILD_ROLES, trigger_label, trigger_options
@@ -31,17 +31,14 @@ from learning.feedback.generalize import suggestions as generalization_suggestio
 from learning.feedback.learned_thresholds import suggestions as learned_threshold_suggestions
 from learning.feedback.lessons import OUTCOMES as LESSON_OUTCOMES, describe_lesson, lesson_options
 from learning.feedback.review import review_facts, review_rules
-from learning.mining.contrast_mining import path_blocked, with_implied
+from learning.mining.contrast_mining import path_blocked, pattern_key, with_implied
 from learning.mining.measures import MEASURES_BY_KEY
-from learning.mining.pattern import pattern_key
 from learning.mining.profiles import build_profiles, has_value
 from learning.promotion import promote_finding
 from learning.runner import backfill_counts, configure, run_discovery
-from learning.state.candidate import Candidate
-from learning.state.candidate_state import CandidateState
+from learning.state.candidate import Candidate, CandidateState
+from learning.state.decision import Scope, Verdict
 from learning.state.rule import Rule
-from learning.state.scope import Scope
-from learning.state.verdict import Verdict
 from model.diagnostics.core import Trigger
 from model.diagnostics.detectors.feature_usage.catalog import DEFAULT_CATALOG
 from model.knowledge.predicates import PREDICATES

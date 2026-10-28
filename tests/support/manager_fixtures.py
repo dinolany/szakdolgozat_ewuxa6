@@ -3,7 +3,7 @@
 Használja: learning/children/test_child_management.py, learning/feedback/test_learned_thresholds.py, learning/mining/test_contrast_mining.py, learning/test_discovery_manager.py, learning/test_discovery_service.py, model/diagnostics/test_suppression.py."""
 from datetime import datetime, timedelta
 
-from learning.mining.pattern_result import PatternResult
+from learning.mining.contrast_mining import PatternResult
 from learning.state.candidate import make_candidate_id
 
 
@@ -24,7 +24,7 @@ def counts(bad, size, population_bad, population):
     return {"bad": bad, "size": size, "population_bad": population_bad, "population": population}
 
 def cid(items, measure="pickup_delay"):
-    from learning.mining.pattern import pattern_key
+    from learning.mining.contrast_mining import pattern_key
     return make_candidate_id(measure, pattern_key(items))
 
 G_SUN = (("assignment_group", "G"), ("weekday", "Sun"))

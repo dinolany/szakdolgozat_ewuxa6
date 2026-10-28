@@ -5,10 +5,20 @@ nem rekurzív "feltétel -> teendő" formájúak, opcionálisan tényekre hivatk
 """
 
 from dataclasses import asdict, dataclass, field
+from enum import Enum
 import hashlib
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
-from learning.state.candidate_state import CandidateState
+
+class CandidateState(str, Enum):
+    QUEUED = "queued"                # döntésre vár
+    FILTERED = "filtered"            # egy szabály elrejtette
+    ACCEPTED = "accepted"            # finding: issue lesz belőle
+    REJECTED_ONCE = "rejected_once"  # elvetve erre az előfordulásra; új előfordulásnál visszajön
+    REJECTED = "rejected"            # elvetve (szabály rögzíti)
+    BASELINED = "baselined"          # ismert eltérés: csak a saját szokásos eltéréséhez képesti romlás jelez
+    ATTACHED = "attached"            # egy nyitott issue (feladat) mintájához illik: az issue-hoz csatolva, nem kerül a sorba
+    REFINED = "refined"              # tovább bontva: maga nem jelez, csak a benne (hozzá képest) kiugró szűkítései
 
 
 def make_candidate_id(measure: str, key: str) -> str:
