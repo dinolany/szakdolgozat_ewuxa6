@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Valódi (céges) adat és belőle származó állapot: nem kerül a repóba
+data.xlsx
+~$*.xlsx
+database.json
+database.json.thresholds.json
+discovery_state.json
+knowledge.json
+backups/
+transformed_timeline.json
+simulation_source.json
+
+# Generált szintetikus idősorok (több száz MB; build_synthetic.py újragenerálja)
+synthetic_timeline*.json
+learning_demo.json

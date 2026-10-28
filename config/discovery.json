@@ -1,0 +1,51 @@
+{
+  "measures": {
+    "pickup_delay": 8,
+    "hold_time": 72.0,
+    "reassignments": 3,
+    "sla_escalation": 1,
+    "stint_pickup": 8.0,
+    "stint_hold": 24
+  },
+  "mining": {
+    "max_order": 2,
+    "min_support": 3,
+    "min_lift": 2.0,
+    "fdr_q": 0.01,
+    "min_improvement": 1.2,
+    "explained_share": 0.8,
+    "min_distinct_days": 1,
+    "top_n": 50
+  },
+  "queue": {
+    "lookback_days": 7,
+    "daily_limit": 10,
+    "decision_capacity": 10,
+    "training_capacity": 25,
+    "training_decisions": 150,
+    "extreme_strength": 6.0,
+    "watch_days": 7
+  },
+  "trend": {
+    "enabled": 1,
+    "history_weeks": 8,
+    "min_history": 20,
+    "min_ratio": 1.5,
+    "prior": 10.0
+  },
+  "review": {
+    "rule_min_age_days": 14,
+    "rule_stale_days": 30,
+    "fact_review_days": 90,
+    "lookback_days": 30,
+    "min_contradictions": 3
+  },
+  "baseline": {
+    "min_size": 30,
+    "prior": 10.0,
+    "backfill_windows": 8,
+    "max_p": 0.05,
+    "min_ratio": 1.5,
+    "min_bad": 3
+  }
+}
