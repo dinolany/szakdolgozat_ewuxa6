@@ -1,9 +1,10 @@
+from collections import OrderedDict
 import copy
 import traceback
-from collections import OrderedDict
 from typing import Any, Dict, List, Tuple
 
-from engine.analyzer import DiagnosticsError, IncidentAnalyzer
+from engine.analyzer import IncidentAnalyzer
+from engine.errors import DiagnosticsError
 from model.history_line import HistoryLine
 from model.incident import Incident
 from storage.incident_repository import IncidentRepository

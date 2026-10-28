@@ -1,27 +1,23 @@
+from dataclasses import replace
 from datetime import datetime
 from typing import Any, Dict, Iterable, List
 
-from storage.threshold_store import WINDOW, ThresholdManager
 from engine.issue_manager import IssueManager
-from model.diagnostics.detectors.backlog_aging import BacklogAgingDiagnosis
+from learning.pattern_finding_diagnosis import PatternFindingDiagnosis
 from model.diagnostics.core import Trigger, parse_timestamp
-from model.diagnostics.detectors.feature_usage import FeatureUsageDiagnosis
+from model.diagnostics.detectors.backlog_aging import BacklogAgingDiagnosis
+from model.diagnostics.detectors.feature_usage.feature_usage_diagnosis import FeatureUsageDiagnosis
 from model.diagnostics.detectors.flapping import FlappingDiagnosis
 from model.diagnostics.detectors.issue_trend import IssueTrendDiagnosis
-from learning.pattern_finding_diagnosis import PatternFindingDiagnosis
 from model.diagnostics.detectors.ping_pong import PingPongDiagnosis
-from model.diagnostics.registry import DiagnosticRegistry
 from model.diagnostics.detectors.similar_description import SimilarDescriptionDiagnosis
 from model.diagnostics.detectors.ticket_volume import TicketVolumeDiagnosis
 from model.diagnostics.detectors.unassigned import UnassignedDiagnosis
+from model.diagnostics.diagnostic_registry import DiagnosticRegistry
 from model.incident import Incident
-from dataclasses import replace
-
-from model.knowledge.knowledge_base import KnowledgeBase, KnowledgeView
-
-
-class DiagnosticsError(RuntimeError):
-    """A diagnosztika vagy az issue-egyeztetés hibázott; az incidensek ettől még el vannak mentve."""
+from model.knowledge.knowledge_view import KnowledgeView
+from storage.knowledge_base import KnowledgeBase
+from storage.threshold_store import ThresholdManager, WINDOW
 
 
 class IncidentAnalyzer:

@@ -13,18 +13,20 @@ a transformed_timeline.json változatlanul. Az eredmény a konzolon futtatható:
 """
 
 import argparse
-import json
-import sys
 from collections import Counter
 from datetime import timedelta
+import json
 from pathlib import Path
+import sys
 
 from config.paths import DATA_DIR
-from storage.excel_loader import load_excel
 from simulation.synthetic.compare import incidents_from_rows, report, window_summary
 from simulation.synthetic.faults import inject, load_scenarios
-from simulation.synthetic.generator import GeneratorParams, build_templates, generate, merge_timelines
+from simulation.synthetic.generator import build_templates, generate, merge_timelines
+from simulation.synthetic.generator_params import GeneratorParams
 from simulation.time_transformer import TimeTransformer
+from storage.excel_loader import load_excel
+
 
 BASE_DIR = DATA_DIR
 

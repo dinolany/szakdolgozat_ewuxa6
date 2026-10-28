@@ -1,38 +1,16 @@
 from copy import deepcopy
 from datetime import datetime, timezone
-from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
+
+from model.issue_state import IssueState
+from model.severity_level import SeverityLevel
+
 
 if TYPE_CHECKING:
     from model.diagnostics.core.measurement import Measurement
 
-
-class SeverityLevel(Enum):
-    INFORMATIONAL = "INFORMATIONAL"
-    EXCEEDED_MODERATE = "EXCEEDED_MODERATE"
-    EXCEEDED_EXTREME = "EXCEEDED_EXTREME"
-
-    def __str__(self):
-        return self.value
-
-
-class IssueState(Enum):
-    ACTIVE = "active"
-    RESOLVED = "resolved"
-    SUPPRESSED = "suppressed"
-    DELETED = "deleted"
-    NOT_RELEVANT = "not_relevant"  # mérve van, de a küszöb alatt marad
-    OUTDATED = "outdated"          # időablakos mérés: az ablak elmúlt, már nincs mit mérni
-    DECLINED = "declined"
-    ARCHIVED = "archived"
-
-    def __str__(self):
-        return self.value
-
-
 # Az elemző és a tanuló kör által az issue-ra írt adatok: a mérés frissítése nem írja felül őket
 KEPT_DETAIL_KEYS = ("lesson", "follow_up", "attached", "attached_news", "known_fault_quiet_since", "known_fault_returned_at")
-
 
 class Issue:
     def __init__(

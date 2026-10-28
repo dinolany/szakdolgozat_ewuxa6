@@ -4,8 +4,9 @@ from typing import Any, Iterable, List, Mapping, Optional, Tuple
 
 from model.diagnostics.core import MeasurementContext, ParameterDef, SingleTicketDiagnosis
 from model.history_line import HistoryLine
-from model.issue import SeverityLevel
-from model.timeline.ticket_timeline import CLOSED_STATES, incident_timeline
+from model.severity_level import SeverityLevel
+from model.timeline.fields import CLOSED_STATES
+from model.timeline.timeline_builder import incident_timeline
 
 
 class FlappingDiagnosis(SingleTicketDiagnosis):

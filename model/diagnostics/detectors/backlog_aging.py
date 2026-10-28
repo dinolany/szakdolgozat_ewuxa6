@@ -8,17 +8,12 @@ hold (felfüggesztett) idő nélkül, mert az a csoportra vonatkozó mérés (ne
 from collections import defaultdict
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
-from model.diagnostics.core import (
-    CrossTicketDiagnosis,
-    MeasurementContext,
-    MeasurementWindow,
-    Observation,
-    ParameterDef,
-    WindowType,
-)
+from model.diagnostics.core import CrossTicketDiagnosis, MeasurementContext, MeasurementWindow, Observation, ParameterDef, WindowType
 from model.diagnostics.history_refs import make_history_ref
-from model.issue import SeverityLevel
-from model.timeline.ticket_timeline import Stint, TicketTimeline, incident_timeline
+from model.severity_level import SeverityLevel
+from model.timeline.stint import Stint
+from model.timeline.ticket_timeline import TicketTimeline
+from model.timeline.timeline_builder import incident_timeline
 
 
 class BacklogAgingDiagnosis(CrossTicketDiagnosis):

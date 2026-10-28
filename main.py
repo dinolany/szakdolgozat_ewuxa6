@@ -3,16 +3,17 @@ import traceback
 
 from config.paths import DASHBOARD_HTML, DATA_DIR
 from dashboard.launcher import open_dashboard
-from engine.analyzer import IncidentAnalyzer
 from dashboard.server import start_dashboard_server
+from engine.analyzer import IncidentAnalyzer
 from engine.event_processor import IncidentEventProcessor
-from learning.service import DiscoveryService
+from learning.discovery_service import DiscoveryService
+from simulation.playback_queue import PlaybackQueue
+from simulation.simulation_scheduler import SimulationScheduler
+from simulation.time_transformer import TimeTransformer
 from simulation.timeline_selector import TimelineSelector
 from storage.excel_loader import excel_fingerprint, load_excel
 from storage.incident_repository import IncidentRepository
-from simulation.time_transformer import TimeTransformer
-from simulation.playback_queue import PlaybackQueue
-from simulation.simulation_scheduler import SimulationScheduler
+
 
 # Repository példányosítása a database.json fájlra
 repo = IncidentRepository("database.json")

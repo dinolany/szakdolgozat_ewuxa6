@@ -8,13 +8,13 @@ A scheduler számára ugyanaz a felület, mint a TimeTransformeré: get_timeline
 """
 
 import json
-import os
-import threading
 from pathlib import Path
+import threading
 from typing import Any, Dict, List, Optional
 
 from config.paths import DATA_DIR
 from simulation.time_transformer import TimeTransformer
+
 
 BASE_DIR = DATA_DIR
 

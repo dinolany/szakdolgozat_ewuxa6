@@ -1,17 +1,16 @@
 """A gyári detektorok a tanuló körben: gazdagabb leírás, elnyomó szabály a valós idejű issue-nyitásban, almérés-egységek."""
-import unittest
 from dataclasses import replace
+from datetime import timedelta
+import unittest
 
-from model.diagnostics.detectors.backlog_aging import BacklogAgingDiagnosis
+from learning.discovery_manager import DiscoveryManager
 from model.diagnostics.core import MeasurementContext, Trigger
 from model.diagnostics.core.suppression import suppressing_rule
+from model.diagnostics.detectors.backlog_aging import BacklogAgingDiagnosis
 from model.diagnostics.detectors.ping_pong import PingPongDiagnosis
-from learning.knowledge import Verdict
-from learning.manager import DiscoveryManager
 from tests.test_core_diagnostics import BOUNCING, L1, T0, at, measured
 from tests.test_discovery import make_incident
 from tests.test_knowledge import DAY
-from datetime import timedelta
 
 
 class SignalItemsTest(unittest.TestCase):
@@ -58,7 +57,8 @@ class BacklogChildUnitsTest(unittest.TestCase):
 class BacklogWorkingHoursTest(unittest.TestCase):
     def test_age_counts_working_hours_when_schedule_is_known(self):
         from datetime import datetime
-        from model.knowledge.knowledge_base import GroupSchedules, KnowledgeView
+        from model.knowledge.group_schedules import GroupSchedules
+        from model.knowledge.knowledge_view import KnowledgeView
         from model.working_time.schedule import Schedule
         friday = datetime(2026, 7, 31, 16)
         incidents = [make_incident(f"I{i}", [(friday.isoformat(), "state", None, "1"), (friday.isoformat(), "assignment_group", "", "G")])
@@ -89,7 +89,7 @@ class GoodDimensionTest(unittest.TestCase):
 
 class LearnedThresholdTest(unittest.TestCase):
     def test_suggests_where_exceeding_is_the_norm(self):
-        from learning.learned_thresholds import suggestions
+        from learning.feedback.learned_thresholds import suggestions
         base = {"moderate_moves": 3, "extreme_moves": 5}
         busy = [((("business_service", "S"),), v) for v in (3, 4, 4, 5, 3, 6, 4, 2, 3, 7)]      # a jegyek többsége >= 3
         calm = [((("business_service", "Q"),), v) for v in (0, 1, 0, 3, 1, 0, 2, 0, 1, 0)]
@@ -108,7 +108,7 @@ class LearnedThresholdTest(unittest.TestCase):
 class KnownFaultRealTimeTest(unittest.TestCase):
     def test_confirmed_issue_reopens_in_the_batch_when_fault_returns_after_quiet(self):
         from engine.issue_manager import IssueManager
-        from model.issue import IssueState
+        from model.issue_state import IssueState
         diagnostic, manager, db = PingPongDiagnosis(), IssueManager(), {"issues": {}, "issue_history": []}
         run = lambda limit: manager.apply_run(db, diagnostic.run(MeasurementContext(
             Trigger.EVENT_BATCH, T0 + timedelta(hours=10), [BOUNCING], list(db["issues"].values()),

@@ -1,18 +1,18 @@
-import tempfile
-import unittest
 from datetime import timedelta
 from pathlib import Path
+import tempfile
+import unittest
 
 from engine.analyzer import IncidentAnalyzer
-from storage.threshold_store import ThresholdManager
 from engine.issue_manager import IssueManager
+from learning.discovery_service import DiscoveryService
+from learning.state.candidate_state import CandidateState
 from model.diagnostics.core import MeasurementContext, Trigger
-from model.diagnostics.detectors.feature_usage import FeatureUsageDiagnosis
-from model.diagnostics.registry import DiagnosticRegistry
-from learning.knowledge import CandidateState
-from learning.service import DiscoveryService
-from model.knowledge.knowledge_base import KnowledgeView
+from model.diagnostics.detectors.feature_usage.feature_usage_diagnosis import FeatureUsageDiagnosis
+from model.diagnostics.diagnostic_registry import DiagnosticRegistry
+from model.knowledge.knowledge_view import KnowledgeView
 from storage.incident_repository import IncidentRepository
+from storage.threshold_store import ThresholdManager
 from tests.test_feature_usage import AS_OF, incidents
 
 

@@ -1,15 +1,19 @@
-import unittest
 from datetime import datetime, timedelta
+import unittest
 
 from engine.issue_manager import IssueManager
-from model.diagnostics.core import MeasurementContext, Trigger
+from learning.discovery_manager import DiscoveryManager
 from learning.pattern_finding_diagnosis import PatternFindingDiagnosis
-from learning.knowledge import Candidate, CandidateState, Verdict, make_candidate_id
-from learning.manager import DiscoveryManager
 from learning.promotion import promote_finding
-from model.issue import Issue, IssueState
+from learning.state.candidate import Candidate, make_candidate_id
+from learning.state.candidate_state import CandidateState
+from learning.state.verdict import Verdict
+from model.diagnostics.core import MeasurementContext, Trigger
+from model.issue import Issue
+from model.issue_state import IssueState
 from tests.test_discovery import make_incident
 from tests.test_knowledge import ingest, result
+
 
 START = datetime(2026, 8, 3)  # hétfő
 

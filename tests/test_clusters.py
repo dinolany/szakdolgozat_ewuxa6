@@ -1,9 +1,9 @@
 import unittest
 
-from learning.clusters import find_clusters, reach
-from learning.knowledge import CandidateState
-from learning.manager import DiscoveryManager
+from learning.discovery_manager import DiscoveryManager
+from learning.mining.clusters import find_clusters, reach
 from tests.test_knowledge import DAY, cid, ingest, result
+
 
 G = (("assignment_group", "G"),)
 G_SUN = (("assignment_group", "G"), ("weekday", "Sun"))

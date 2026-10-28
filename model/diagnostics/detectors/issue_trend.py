@@ -4,7 +4,9 @@ from collections import defaultdict
 from typing import Any, Dict, Iterable, List, Mapping, Optional
 
 from model.diagnostics.core import CrossIssueDiagnosis, MeasurementContext, MeasurementWindow, Observation, ParameterDef
-from model.issue import Issue, IssueState, SeverityLevel
+from model.issue import Issue
+from model.issue_state import IssueState
+from model.severity_level import SeverityLevel
 
 
 class IssueTrendDiagnosis(CrossIssueDiagnosis):

@@ -1,7 +1,7 @@
 import unittest
 
-from learning.generalize import suggestions
-from learning.knowledge import Rule
+from learning.feedback.generalize import suggestions
+from learning.state.rule import Rule
 
 
 def rule(rule_id, conditions, measures=None, source="decision:DEC-1"):
@@ -65,7 +65,7 @@ class BreakdownPathTest(unittest.TestCase):
         import random
         from datetime import datetime, timedelta
         from learning import MiningParams, mine
-        from learning.mining import path_blocked
+        from learning.mining.contrast_mining import path_blocked
         from tests.test_discovery import PICKUP, make_profile
         self.assertTrue(path_blocked({"weekday", "assignment_group"}, "subcategory", [("nap", "subcategory")]))
         self.assertTrue(path_blocked({"date"}, "subcategory", [("nap", "subcategory")]))

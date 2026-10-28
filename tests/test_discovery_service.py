@@ -1,11 +1,11 @@
-import tempfile
-import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
+import tempfile
+import unittest
 
 from engine.analyzer import IncidentAnalyzer
 from engine.event_processor import IncidentEventProcessor
-from learning.service import DiscoveryService
+from learning.discovery_service import DiscoveryService
 from storage.incident_repository import IncidentRepository
 
 

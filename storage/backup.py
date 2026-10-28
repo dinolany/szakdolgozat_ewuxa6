@@ -6,11 +6,12 @@ előző másolat óta legalább `min_interval` eltelt – a két fájl együtt e
 hosszabb ideig megtartott másolat is készül. Visszaállításkor a kiválasztott mappa fájljai kerülnek vissza.
 """
 
-import shutil
-import time
 from datetime import datetime
 from pathlib import Path
+import shutil
+import time
 from typing import Dict, Iterable, List, Optional
+
 
 KEEP_RECENT = 30      # ennyi friss másolat marad
 KEEP_DAILY = 60       # ennyi napi másolat marad

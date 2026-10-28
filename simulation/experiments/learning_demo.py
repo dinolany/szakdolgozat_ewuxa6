@@ -10,15 +10,16 @@ synthetic/learning_sim.py.
 """
 
 import argparse
+from datetime import timedelta
 import json
+from pathlib import Path
 import sys
 import time
-from datetime import timedelta
-from pathlib import Path
 
 from config.paths import CONFIG_DIR, DATA_DIR
-from simulation.synthetic.compare import incidents_from_rows
 from simulation.experiments.learning_sim import run_learning_sim
+from simulation.synthetic.compare import incidents_from_rows
+
 
 BASE_DIR = DATA_DIR
 

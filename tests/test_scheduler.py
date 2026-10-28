@@ -1,8 +1,9 @@
+from datetime import datetime, timedelta
 import time
 import unittest
-from datetime import datetime, timedelta
 
 from simulation.simulation_scheduler import SimulationScheduler
+
 
 START = datetime(2026, 8, 3, 6)
 END = datetime(2026, 8, 6, 6)          # három nap

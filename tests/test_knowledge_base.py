@@ -1,15 +1,14 @@
 import json
+from pathlib import Path
 import tempfile
 import unittest
-from datetime import datetime
-from pathlib import Path
 
 from engine.issue_manager import IssueManager
+from learning.discovery_manager import DiscoveryManager
 from model.diagnostics.core import Trigger
-from model.diagnostics.detectors.feature_usage import FeatureUsageDiagnosis
-from model.diagnostics.registry import DiagnosticRegistry
-from learning.manager import DiscoveryManager
-from model.knowledge.knowledge_base import KnowledgeBase
+from model.diagnostics.detectors.feature_usage.feature_usage_diagnosis import FeatureUsageDiagnosis
+from model.diagnostics.diagnostic_registry import DiagnosticRegistry
+from storage.knowledge_base import KnowledgeBase
 from tests.test_feature_usage import AS_OF, incidents
 
 

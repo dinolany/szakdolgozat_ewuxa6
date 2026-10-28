@@ -1,9 +1,10 @@
-import unittest
 from datetime import datetime, timedelta
+import unittest
 
-from learning.analysis import analyze_candidate, brief, describe_condition
-from learning.knowledge import Candidate, make_candidate_id
+from learning.analysis.candidate_analysis import analyze_candidate, brief, describe_condition
+from learning.state.candidate import Candidate, make_candidate_id
 from tests.test_discovery import make_incident
+
 
 START = datetime(2026, 8, 3, 9)   # hétfő
 
@@ -91,9 +92,9 @@ if __name__ == "__main__":
 class BreakdownTest(unittest.TestCase):
     def test_half_subcategory_half_service(self):
         from datetime import datetime, timedelta
-        from learning.analysis import breakdown
-        from learning.knowledge import Candidate
-        from learning.profile import ProfileSet
+        from learning.analysis.candidate_analysis import breakdown
+        from learning.state.candidate import Candidate
+        from learning.mining.profile_set import ProfileSet
         from tests.test_discovery import make_profile
         wed = datetime(2026, 8, 5, 10)   # szerda
         profiles, index = [], 0

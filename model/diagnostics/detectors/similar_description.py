@@ -9,18 +9,11 @@ from collections import defaultdict
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
 from model.diagnostics.common import normalize_text
-from model.diagnostics.core import (
-    LOOKBACK_KEY,
-    CrossTicketDiagnosis,
-    MeasurementContext,
-    MeasurementWindow,
-    Observation,
-    ParameterDef,
-    WindowType,
-)
+from model.diagnostics.core import CrossTicketDiagnosis, LOOKBACK_KEY, MeasurementContext, MeasurementWindow, Observation, ParameterDef, WindowType
 from model.diagnostics.history_refs import make_history_ref
-from model.issue import SeverityLevel
-from model.timeline.ticket_timeline import FieldChange, incident_timeline
+from model.severity_level import SeverityLevel
+from model.timeline.field_change import FieldChange
+from model.timeline.timeline_builder import incident_timeline
 
 
 class SimilarDescriptionDiagnosis(CrossTicketDiagnosis):

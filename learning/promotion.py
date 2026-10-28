@@ -1,9 +1,10 @@
 from typing import Any, Dict, Optional
 
-from model.diagnostics.core import MeasurementContext
 from learning.pattern_finding_diagnosis import PatternFindingDiagnosis
-from learning.knowledge import Candidate
-from model.issue import Issue, IssueState
+from learning.state.candidate import Candidate
+from model.diagnostics.core import MeasurementContext
+from model.issue import Issue
+from model.issue_state import IssueState
 
 
 def finding_definition(candidate: Candidate, bad_threshold: float) -> Dict[str, Any]:
@@ -17,7 +18,6 @@ def finding_definition(candidate: Candidate, bad_threshold: float) -> Dict[str, 
         "bad_threshold": bad_threshold,
         "candidate_id": candidate.candidate_id,
     }
-
 
 def promote_finding(
     db_data: Dict[str, Any],

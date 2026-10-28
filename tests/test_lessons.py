@@ -1,8 +1,8 @@
 import unittest
 
-from learning.knowledge import Candidate
-from learning.lessons import lesson_options
-from model.knowledge.knowledge_base import PREDICATES
+from learning.feedback.lessons import lesson_options
+from learning.state.candidate import Candidate
+from model.knowledge.predicates import PREDICATES
 
 
 class LessonOptionsTest(unittest.TestCase):

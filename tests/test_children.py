@@ -1,13 +1,17 @@
-import unittest
 from datetime import datetime, timedelta
+import unittest
 
-from learning.children import (ChildDef, UnitContext, compile_expression, evaluate, rows_to_expression,
-                                       run_child, trigger_matches, trigger_options)
-from learning.knowledge import CandidateState, Verdict
-from learning.manager import DiscoveryManager
-from model.timeline.ticket_timeline import incident_timeline
+from learning.children.child_def import ChildDef, trigger_matches, trigger_options
+from learning.children.child_runner import run_child
+from learning.children.expression_language import compile_expression, evaluate, rows_to_expression
+from learning.children.unit_context import UnitContext
+from learning.discovery_manager import DiscoveryManager
+from learning.state.candidate_state import CandidateState
+from learning.state.verdict import Verdict
+from model.timeline.timeline_builder import incident_timeline
 from tests.test_discovery import make_incident
 from tests.test_knowledge import DAY, cid, ingest, result
+
 
 START = datetime(2026, 8, 3, 9)
 AS_OF = datetime(2026, 8, 20)
@@ -130,8 +134,8 @@ if __name__ == "__main__":
 
 class DimensionAndReviewTest(unittest.TestCase):
     def test_grouping_child_as_search_dimension_uses_its_value(self):
-        from learning.profile import build_profiles
-        from model.knowledge.knowledge_base import KnowledgeBase
+        from learning.mining.profiles import build_profiles
+        from storage.knowledge_base import KnowledgeBase
         knowledge = KnowledgeBase()
         manager = DiscoveryManager({}, knowledge=knowledge)
         child = manager.add_child("Ráadó csoport", "elozo_csoport", method="group", as_dimension=True)
@@ -150,8 +154,8 @@ class DimensionAndReviewTest(unittest.TestCase):
         self.assertEqual((changed.role, changed.auto), ("alert", False))
 
     def test_child_as_search_dimension(self):
-        from learning.profile import build_profiles
-        from model.knowledge.knowledge_base import KnowledgeBase
+        from learning.mining.profiles import build_profiles
+        from storage.knowledge_base import KnowledgeBase
         knowledge = KnowledgeBase()
         manager = DiscoveryManager({}, knowledge=knowledge)
         child = manager.add_child("Close notes-szal zárta", 'lezarta and kitoltve("close_notes")', as_dimension=True)
@@ -185,7 +189,7 @@ class DimensionAndReviewTest(unittest.TestCase):
         self.assertIn((("almeres:CHD-0001", "igen"),), found)
 
     def test_review_reasons(self):
-        from learning.children import ChildReviewParams, review_children
+        from learning.children.child_review import ChildReviewParams, review_children
         now = datetime(2026, 9, 1)
         base = dict(expression="lezarta", created_at="2026-08-01T00:00:00")
         children = [
@@ -214,7 +218,7 @@ class ReviewConfigTest(unittest.TestCase):
     def test_review_params_ignore_child_keys(self):
         import tempfile
         from pathlib import Path
-        from learning.config import DiscoveryConfig
+        from learning.discovery_config import DiscoveryConfig
         with tempfile.TemporaryDirectory() as tmp:
             config = DiscoveryConfig(str(Path(tmp) / "discovery.json"))
             self.assertEqual(config.review_params().min_contradictions, 3)

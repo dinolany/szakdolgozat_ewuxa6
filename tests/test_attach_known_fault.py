@@ -1,13 +1,16 @@
-import unittest
 from types import SimpleNamespace
+import unittest
 
 from engine.issue_manager import IssueManager
-from learning.knowledge import CandidateState, Verdict
-from learning.manager import DiscoveryManager
-from learning.service import DiscoveryService
-from model.issue import Issue, IssueState
-from model.knowledge.knowledge_base import KnowledgeBase
+from learning.discovery_manager import DiscoveryManager
+from learning.discovery_service import DiscoveryService
+from learning.state.candidate_state import CandidateState
+from learning.state.verdict import Verdict
+from model.issue import Issue
+from model.issue_state import IssueState
+from storage.knowledge_base import KnowledgeBase
 from tests.test_knowledge import DAY, cid, ingest, result
+
 
 G_SAT = (("assignment_group", "G"), ("weekday", "Sat"))
 G = (("assignment_group", "G"),)

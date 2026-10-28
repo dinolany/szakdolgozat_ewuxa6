@@ -1,18 +1,20 @@
-import unittest
 from datetime import datetime, timedelta
+import unittest
 
 from engine.issue_manager import IssueManager
-from model.diagnostics.core import MeasurementContext, Trigger
-from learning.pattern_finding_diagnosis import PatternFindingDiagnosis
 from learning import MEASURES_BY_KEY, MiningParams, mine
-from learning.baseline import pattern_counts
-from learning.knowledge import Candidate, CandidateState, make_candidate_id
-from learning.manager import DiscoveryManager
-from learning.profile import build_profiles, profile_from_timeline, stint_profiles
+from learning.discovery_manager import DiscoveryManager
+from learning.mining.baseline import pattern_counts
+from learning.mining.profiles import build_profiles, profile_from_timeline, stint_profiles
+from learning.pattern_finding_diagnosis import PatternFindingDiagnosis
 from learning.promotion import promote_finding
-from model.knowledge.knowledge_base import KnowledgeView
-from model.timeline.ticket_timeline import incident_timeline
+from learning.state.candidate import Candidate, make_candidate_id
+from learning.state.candidate_state import CandidateState
+from model.diagnostics.core import MeasurementContext, Trigger
+from model.knowledge.knowledge_view import KnowledgeView
+from model.timeline.timeline_builder import incident_timeline
 from tests.test_discovery import make_incident
+
 
 START = datetime(2026, 8, 3)  # hétfő
 LEVELS = {"L1": "L1"}

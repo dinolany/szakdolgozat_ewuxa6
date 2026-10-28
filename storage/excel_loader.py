@@ -1,8 +1,7 @@
 # loader.py
 import os
-from typing import Any, Dict, List
-
 import pandas as pd
+from typing import Any, Dict, List
 
 
 def excel_fingerprint(excel_path: str = "data.xlsx") -> str | None:

@@ -1,11 +1,13 @@
-import unittest
 from datetime import datetime, timedelta
+import unittest
 
-from learning.knowledge import Rule
-from learning.review import ReviewParams, review_facts, review_rules
-from model.knowledge.knowledge_base import Fact
-from model.timeline.ticket_timeline import incident_timeline
+from learning.feedback.review import review_facts, review_rules
+from learning.feedback.review_params import ReviewParams
+from learning.state.rule import Rule
+from model.knowledge.fact import Fact
+from model.timeline.timeline_builder import incident_timeline
 from tests.test_discovery import make_incident
+
 
 NOW = datetime(2026, 9, 30)
 

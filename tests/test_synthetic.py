@@ -1,9 +1,11 @@
-import unittest
 from collections import Counter
 from datetime import datetime, timedelta
+import unittest
 
 from simulation.synthetic.compare import incidents_from_rows, window_summary
-from simulation.synthetic.generator import GeneratorParams, build_templates, generate, instantiate, merge_timelines
+from simulation.synthetic.generator import build_templates, generate, instantiate, merge_timelines
+from simulation.synthetic.generator_params import GeneratorParams
+
 
 START = datetime(2026, 8, 3)  # hétfő
 

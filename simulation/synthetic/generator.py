@@ -11,14 +11,17 @@ Minden szintetikus nap:
 A szintetikus ticketek a valódi idősor végén ugyanúgy elvágódnak, mint a valódiak.
 """
 
+from collections import defaultdict
+from datetime import datetime, time, timedelta
 import math
 import random
-from collections import defaultdict
-from dataclasses import dataclass
-from datetime import datetime, time, timedelta
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
-from learning.profile import DIMENSIONS, canonical_field
+from learning.mining.profiles import DIMENSIONS
+from model.timeline.fields import canonical_field
+from simulation.synthetic.generator_params import GeneratorParams
+from simulation.synthetic.template import Template
+
 
 TIME_KEYS = ("update_time", "sys_created_on", "timestamp", "_virtual_dt")
 ID_KEYS = ("set", "incident", "incident_id", "number")
@@ -42,22 +45,6 @@ def _incident_id(row: Mapping[str, Any]) -> str:
 
 def _text(value: Any) -> str:
     return "" if value is None else str(value).strip()
-
-
-@dataclass(frozen=True)
-class Template:
-    incident_id: str
-    opened_at: datetime
-    events: Tuple[Tuple[float, Dict[str, Any]], ...]  # (másodperc a nyitástól, sor időmezők nélkül)
-    first_values: Dict[str, str]                       # dimenzió -> első kitöltött érték
-
-    @property
-    def weekday(self) -> int:
-        return self.opened_at.weekday()
-
-    @property
-    def group(self) -> str:
-        return self.first_values.get("assignment_group", "")
 
 
 def build_templates(rows: Iterable[Mapping[str, Any]]) -> List[Template]:
@@ -86,17 +73,6 @@ def build_templates(rows: Iterable[Mapping[str, Any]]) -> List[Template]:
             first_values,
         ))
     return sorted(templates, key=lambda t: (t.opened_at, t.incident_id))
-
-
-@dataclass(frozen=True)
-class GeneratorParams:
-    weeks: int = 12                 # ennyi szintetikus hét a valódi idősor elé
-    seed: int = 1
-    swap_share: float = 0.5         # ekkora eséllyel kap a ticket egy másik (azonos csoportú) lefutást
-    open_jitter_minutes: int = 30   # a nyitási idő szórása a sablonéhoz képest (a napon belül marad)
-    volume_scale: float = 1.0       # az érkezési ütem szorzója
-    observed_days: int = 14         # a sablonok ennyi napról származnak (a napi átlaghoz)
-    id_prefix: str = "SYN"
 
 
 def _poisson(rng: random.Random, mean: float) -> int:

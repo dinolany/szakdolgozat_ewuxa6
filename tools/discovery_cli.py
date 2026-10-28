@@ -7,31 +7,36 @@ Használat:
 """
 
 import argparse
+from datetime import datetime, timedelta
 import json
+from pathlib import Path
 import shlex
 import sys
-from datetime import datetime, timedelta
-from pathlib import Path
 from typing import Dict, List, Optional
 
 from config.paths import CONFIG_DIR, DATA_DIR
 from engine.issue_manager import IssueManager
-from learning.config import DEFINITIONS, MEASURES_SECTION, DiscoveryConfig
-from learning.knowledge import NEM_DOLGOZIK, Candidate, CandidateState, Scope, Verdict
-from learning.manager import DiscoveryManager
-from learning.measures import MEASURES_BY_KEY
-from learning.mining import with_implied
+from learning.discovery_config import DEFINITIONS, DiscoveryConfig, MEASURES_SECTION
+from learning.discovery_manager import DiscoveryManager
+from learning.feedback.review import review_facts, review_rules
+from learning.mining.contrast_mining import with_implied
+from learning.mining.measures import MEASURES_BY_KEY
+from learning.pattern_finding_diagnosis import PatternFindingDiagnosis
 from learning.promotion import promote_finding
 from learning.runner import backfill_counts, configure, run_discovery
+from learning.state.candidate import Candidate
+from learning.state.candidate_state import CandidateState
+from learning.state.scope import Scope
+from learning.state.verdict import Verdict
 from model.diagnostics.core import MeasurementContext, Trigger, parse_timestamp
-from model.diagnostics.detectors.feature_usage import ALL_GROUPS, FeatureUsageDiagnosis
-from learning.pattern_finding_diagnosis import PatternFindingDiagnosis
+from model.diagnostics.detectors.feature_usage.feature_usage_diagnosis import FeatureUsageDiagnosis
 from model.history_line import HistoryLine
 from model.incident import Incident
 from model.issue import Issue
-from learning.review import review_facts, review_rules
-from model.knowledge.knowledge_base import KnowledgeBase
-from model.timeline.ticket_timeline import incident_timeline
+from model.knowledge.predicates import ALL_GROUPS, NEM_DOLGOZIK
+from model.timeline.timeline_builder import incident_timeline
+from storage.knowledge_base import KnowledgeBase
+
 
 BASE_DIR = DATA_DIR
 HELP = """

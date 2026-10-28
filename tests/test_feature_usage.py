@@ -1,15 +1,17 @@
-import unittest
 from datetime import datetime, timedelta
+import json
+from pathlib import Path
+import tempfile
+import unittest
 
 from model.diagnostics.core import MeasurementContext, Trigger
-import json
-import tempfile
-from pathlib import Path
-
-from model.diagnostics.detectors.feature_usage import FeatureDef, FeatureUsageDiagnosis, load_catalog, occasions
-from model.knowledge.knowledge_base import KnowledgeView
-from model.timeline.ticket_timeline import incident_timeline
+from model.diagnostics.detectors.feature_usage.catalog import load_catalog, occasions
+from model.diagnostics.detectors.feature_usage.feature_def import FeatureDef
+from model.diagnostics.detectors.feature_usage.feature_usage_diagnosis import FeatureUsageDiagnosis
+from model.knowledge.knowledge_view import KnowledgeView
+from model.timeline.timeline_builder import incident_timeline
 from tests.test_discovery import make_incident
+
 
 START = datetime(2026, 8, 3, 9)
 AS_OF = datetime(2026, 8, 20)

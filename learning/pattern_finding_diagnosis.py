@@ -10,33 +10,25 @@ A minták definíciója (mérés, mezőérték-párok, rossz-küszöb) a diagnos
 from datetime import datetime
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
 
-from model.diagnostics.core import (
-    LOOKBACK_KEY,
-    CrossTicketDiagnosis,
-    DiagnosticRun,
-    MeasurementContext,
-    MeasurementWindow,
-    Observation,
-    ParameterDef,
-    WindowType,
-)
-from learning.measures import MEASURES_BY_KEY
-from learning.mining import binomial_sf, pattern_key
-from learning.profile import ProfileSet, TicketProfile, build_profiles, has_value
-from model.issue import SeverityLevel
+from learning.mining.contrast_mining import binomial_sf
+from learning.mining.measures import MEASURES_BY_KEY
+from learning.mining.pattern import pattern_key
+from learning.mining.profile_set import ProfileSet
+from learning.mining.profiles import build_profiles, has_value
+from learning.mining.ticket_profile import TicketProfile
+from model.diagnostics.core import CrossTicketDiagnosis, DiagnosticRun, LOOKBACK_KEY, MeasurementContext, MeasurementWindow, Observation, ParameterDef, WindowType
+from model.severity_level import SeverityLevel
+
 
 Items = Tuple[Tuple[str, str], ...]
 
-
 def finding_subject(measure: str, items: Iterable[Tuple[str, str]]) -> str:
     return f"{measure}|{pattern_key(items)}"
-
 
 def _matches(profile: TicketProfile, items: Items) -> bool:
     """Az egység illik-e a mintára (több értékű dimenziónál elég, ha az érték köztük van; a dátumos
     elem tickettnél a nyitás, szakasznál az érkezés napjára vonatkozik)."""
     return all(has_value(profile.dimensions, dim, value) for dim, value in items)
-
 
 def measure_pattern(
     profiles: Union[ProfileSet, Sequence[TicketProfile]], measure_key: str, items: Items, bad_threshold: float
@@ -63,7 +55,6 @@ def measure_pattern(
         "p_value": binomial_sf(len(bad), len(group), base_rate) if base_rate else 1.0,
         "bad_profiles": bad,
     }
-
 
 class PatternFindingDiagnosis(CrossTicketDiagnosis):
     key = "PATTERN_FINDING"

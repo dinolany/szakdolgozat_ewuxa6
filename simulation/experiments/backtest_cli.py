@@ -10,13 +10,14 @@ synthetic_timeline.clean.json – ezzel a téves riasztás is mérhető.
 
 import argparse
 import json
-import sys
 from pathlib import Path
+import sys
 
 from config.paths import DATA_DIR
-from learning.config import DiscoveryConfig
+from learning.discovery_config import DiscoveryConfig
 from simulation.experiments.backtest import report, run_backtest
 from simulation.synthetic.compare import incidents_from_rows
+
 
 BASE_DIR = DATA_DIR
 

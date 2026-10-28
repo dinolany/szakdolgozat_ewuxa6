@@ -1,7 +1,8 @@
-import unittest
 from datetime import datetime
+import unittest
 
-from learning import follow_up as fu
+from learning.feedback import follow_up as fu
+
 
 NOW = "2026-08-01T00:00:00"
 

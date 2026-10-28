@@ -13,16 +13,17 @@ Az időbeli beszúrásnál a ticket minden későbbi eseménye eltolódik, így 
 a valódi idősor végén ugyanúgy elvágódik, mint a többi szintetikus ticket.
 """
 
-import json
-import random
 from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
+import json
 from pathlib import Path
+import random
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
-from model.timeline.ticket_timeline import canonical_field, clean_value
+from model.timeline.fields import canonical_field, clean_value
 from simulation.synthetic.generator import TIME_KEYS
+
 
 ALL = "*"
 
@@ -181,7 +182,7 @@ def group_profiles(rows: Sequence[Dict[str, Any]], l1_groups: Sequence[str] = ()
     hosszú hold, továbbpattanás, munkajegyzet-használat. Ebből választható "tiszta" célcsoport:
     ahol a beültetett hiba nem keveredik egy már meglévő, természetes mintával."""
     from simulation.synthetic.compare import incidents_from_rows   # körkörös import elkerülése
-    from model.timeline.ticket_timeline import incident_timeline
+    from model.timeline.timeline_builder import incident_timeline
     incidents = incidents_from_rows(rows)
     moment = as_of or max(_time(r) for r in rows)
     stats: Dict[str, Counter] = defaultdict(Counter)

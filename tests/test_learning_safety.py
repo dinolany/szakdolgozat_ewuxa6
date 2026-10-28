@@ -1,17 +1,17 @@
 """A tanuló modul megbízhatósága: mentés és visszaállítás, a szabályok túlélik a resetet, biztonsági szelep, mérleg."""
-import os
-import tempfile
-import time
-import unittest
-from datetime import datetime
 from pathlib import Path
+import tempfile
+import unittest
 
 from engine.analyzer import IncidentAnalyzer
+from learning.discovery_service import DiscoveryService
+from learning.state.candidate_state import CandidateState
+from learning.state.scope import Scope
+from learning.state.verdict import Verdict
 from storage import backup
-from learning.knowledge import CandidateState, Scope, Verdict
-from learning.service import DiscoveryService
 from storage.incident_repository import IncidentRepository
 from tests.test_knowledge import DAY, cid, ingest, result
+
 
 G = (("assignment_group", "G"),)
 

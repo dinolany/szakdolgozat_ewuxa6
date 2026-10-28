@@ -10,9 +10,9 @@ from typing import Any, Iterable, List, Mapping, Optional, Tuple
 
 from model.diagnostics.core import MeasurementContext, ParameterDef, SingleTicketDiagnosis
 from model.history_line import HistoryLine
-from model.issue import SeverityLevel
-from model.knowledge.knowledge_base import L1_LEVEL
-from model.timeline.ticket_timeline import incident_timeline
+from model.knowledge.predicates import L1_LEVEL
+from model.severity_level import SeverityLevel
+from model.timeline.timeline_builder import incident_timeline
 
 
 class PingPongDiagnosis(SingleTicketDiagnosis):

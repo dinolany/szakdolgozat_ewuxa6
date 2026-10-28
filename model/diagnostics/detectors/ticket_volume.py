@@ -8,18 +8,10 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Set, Tuple
 
-from model.diagnostics.core import (
-    BUCKET_KEY,
-    CrossTicketDiagnosis,
-    MeasurementContext,
-    MeasurementWindow,
-    Observation,
-    ParameterDef,
-    WindowType,
-)
+from model.diagnostics.core import BUCKET_KEY, CrossTicketDiagnosis, MeasurementContext, MeasurementWindow, Observation, ParameterDef, WindowType
 from model.diagnostics.history_refs import make_history_ref
-from model.issue import SeverityLevel
-from model.timeline.ticket_timeline import incident_timeline
+from model.severity_level import SeverityLevel
+from model.timeline.timeline_builder import incident_timeline
 
 
 def _day_type(moment: datetime) -> str:

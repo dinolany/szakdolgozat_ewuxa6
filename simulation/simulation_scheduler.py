@@ -1,11 +1,12 @@
+from datetime import datetime, timedelta
 import threading
 import time
 import traceback
-from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import Any, Dict, List, TYPE_CHECKING
 
-from simulation.time_transformer import TimeTransformer
 from simulation.playback_queue import PlaybackQueue
+from simulation.time_transformer import TimeTransformer
+
 
 if TYPE_CHECKING:
     from engine.event_processor import IncidentEventProcessor

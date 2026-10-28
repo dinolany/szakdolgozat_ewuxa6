@@ -1,53 +1,16 @@
 from contextlib import contextmanager
-from datetime import date, datetime
+from enum import Enum
 import json
-import math
-import numbers
 import os
 import shutil
 import threading
 import time
-from enum import Enum
-from typing import Any, Dict, Iterator, List, Optional
+from typing import Any, Dict, Iterator, Optional
 
 from model.incident import Incident
 from model.issue import Issue
-
-def clean_nan(value: Any):
-    """JSON-kompatibilissé tisztítja a DTO-k hiányzó és nem véges értékeit."""
-    if value is None or isinstance(value, (str, bool, int)):
-        return value
-    if isinstance(value, numbers.Real):
-        numeric_value = float(value)
-        return numeric_value if math.isfinite(numeric_value) else None
-    if value.__class__.__name__ in {"NaTType", "NAType"}:
-        return None
-    if isinstance(value, (datetime, date)):
-        return value.isoformat()
-    if isinstance(value, dict):
-        return {key: clean_nan(item) for key, item in value.items()}
-    if isinstance(value, (list, tuple, set, frozenset)):
-        return [clean_nan(item) for item in value]
-    if hasattr(value, "item"):
-        try:
-            return clean_nan(value.item())
-        except (TypeError, ValueError):
-            pass
-    if hasattr(value, "to_dict"):
-        return clean_nan(value.to_dict())
-    return str(value)
-
-
-class RepositoryError(RuntimeError):
-    """Az adatbázis-réteg hibáinak közös őse."""
-
-
-class DatabaseCorruptedError(RepositoryError):
-    """A database.json nem értelmezhető. Írás nem történik, amíg reset (clear) vagy kézi javítás nem jön."""
-
-
-class DatabaseIOError(RepositoryError):
-    """A database.json nem olvasható vagy nem írható (pl. egy másik program zárolja)."""
+from storage.errors import DatabaseCorruptedError, DatabaseIOError
+from storage.json_cleaning import clean_nan
 
 
 class IncidentRepository:

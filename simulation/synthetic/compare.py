@@ -4,10 +4,12 @@ from collections import Counter
 from datetime import datetime
 from typing import Any, Dict, Iterable, List, Mapping, Sequence
 
-from learning.measures import MEASURES
-from learning.profile import TicketProfile, build_profile, dimension_values
+from learning.mining.measures import MEASURES
+from learning.mining.profiles import build_profile, dimension_values
+from learning.mining.ticket_profile import TicketProfile
 from model.history_line import HistoryLine
 from model.incident import Incident
+
 
 _WEEKDAYS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 

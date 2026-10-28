@@ -1,7 +1,7 @@
-import unittest
 from datetime import datetime
+import unittest
 
-from learning.backlog import calendar, time_marks
+from learning.analysis.backlog import calendar, time_marks
 
 
 class BacklogCalendarTest(unittest.TestCase):

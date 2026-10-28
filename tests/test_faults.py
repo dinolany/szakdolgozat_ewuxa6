@@ -1,10 +1,11 @@
-import unittest
 from datetime import datetime, timedelta
+import unittest
 
-from model.timeline.ticket_timeline import build_timeline
+from model.timeline.timeline_builder import build_timeline
 from simulation.synthetic.compare import incidents_from_rows
 from simulation.synthetic.faults import Fault, group_profiles, inject, pick_clean_group
 from tests.test_synthetic import row
+
 
 START = datetime(2026, 7, 6)  # hétfő
 CUT = datetime(2026, 9, 1)

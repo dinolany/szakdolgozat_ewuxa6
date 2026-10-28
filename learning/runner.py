@@ -2,14 +2,18 @@ from dataclasses import replace
 from datetime import datetime, timedelta
 from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple
 
-from learning.baseline import pattern_counts
-from learning.config import BASELINE_SECTION, QUEUE_SECTION, TREND_SECTION, DiscoveryConfig
-from learning.knowledge import Candidate, CandidateState, make_candidate_id
-from learning.manager import DiscoveryManager, IngestReport
-from learning.measures import MEASURES, MEASURES_BY_KEY
-from learning.mining import PatternResult, mine
-from learning.profile import ProfileSet, build_profiles
-from learning.trend import mine_trends
+from learning.discovery_config import BASELINE_SECTION, DiscoveryConfig, QUEUE_SECTION, TREND_SECTION
+from learning.discovery_manager import DiscoveryManager
+from learning.ingest_report import IngestReport
+from learning.mining.baseline import pattern_counts
+from learning.mining.contrast_mining import mine
+from learning.mining.measures import MEASURES, MEASURES_BY_KEY
+from learning.mining.pattern_result import PatternResult
+from learning.mining.profile_set import ProfileSet
+from learning.mining.profiles import build_profiles
+from learning.mining.trend import mine_trends
+from learning.state.candidate import Candidate, make_candidate_id
+from learning.state.candidate_state import CandidateState
 from model.incident import Incident
 
 
@@ -33,7 +37,6 @@ def discover(
     results, populations = _mine_all(profiles, config)
     results.extend(_mine_trends(incidents, as_of, window_start, config, levels, profiles, known_bad))
     return results, window_start, populations
-
 
 def _mine_trends(incidents, as_of: datetime, window_start: datetime, config: DiscoveryConfig, levels, current: ProfileSet,
                  known_bad: Optional[Mapping[str, Set[str]]] = None) -> List[PatternResult]:
@@ -60,7 +63,6 @@ def _mine_trends(incidents, as_of: datetime, window_start: datetime, config: Dis
                                    config.measure_threshold(measure.key), (known_bad or {}).get(measure.key, ())))
     return results
 
-
 def _mine_all(profiles: ProfileSet, config: DiscoveryConfig,
               contexts: Optional[Mapping[str, Sequence[Tuple[Tuple[str, str], ...]]]] = None,
               blocked_paths: Iterable[Tuple[str, str]] = (),
@@ -78,14 +80,12 @@ def _mine_all(profiles: ProfileSet, config: DiscoveryConfig,
                             (contexts or {}).get(measure.key, ())))
     return results, populations
 
-
 def _counts(profiles: ProfileSet, measure_key: str, items, config: DiscoveryConfig) -> Dict[str, int]:
     """Egy minta darabszámai az ablakban (érintett, összes, populáció) az ismert eltérés normájához.
 
     Hívja: runner.backfill_counts, runner.run_discovery."""
     measure = MEASURES_BY_KEY[measure_key]
     return pattern_counts(profiles.for_measure(measure), measure, items, config.measure_threshold(measure_key))
-
 
 def configure(manager: DiscoveryManager, config: DiscoveryConfig) -> None:
     """A kezelő paraméterei a beállításokból (erősség, keret, ismert eltérés, kiemelt mezők, jelzés-visszatérés).
@@ -104,7 +104,6 @@ def configure(manager: DiscoveryManager, config: DiscoveryConfig) -> None:
     manager.baseline_min_ratio = config.get(BASELINE_SECTION, "min_ratio")
     manager.baseline_min_bad = config.get(BASELINE_SECTION, "min_bad")
     manager.emphasized_dimensions = frozenset(d for d, r in config.dimension_roles().items() if r == 3)
-
 
 def run_discovery(
     manager: DiscoveryManager,
@@ -134,7 +133,6 @@ def run_discovery(
     patterns.update({make_candidate_id(r.measure, r.candidate_key): (r.measure, r.items) for r in results})
     counts = {cid: _counts(profiles, measure, items, config) for cid, (measure, items) in patterns.items()}
     return manager.ingest(results, as_of, window_start, as_of, counts)
-
 
 def backfill_counts(
     manager: DiscoveryManager,

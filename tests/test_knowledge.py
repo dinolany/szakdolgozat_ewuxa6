@@ -1,9 +1,14 @@
-import unittest
 from datetime import datetime, timedelta
+import unittest
 
-from learning.knowledge import CandidateState, Scope, Verdict, make_candidate_id
-from learning.manager import DiscoveryManager
-from learning.mining import PatternResult, merge_equivalent
+from learning.discovery_manager import DiscoveryManager
+from learning.mining.contrast_mining import merge_equivalent
+from learning.mining.pattern_result import PatternResult
+from learning.state.candidate import make_candidate_id
+from learning.state.candidate_state import CandidateState
+from learning.state.scope import Scope
+from learning.state.verdict import Verdict
+
 
 DAY = datetime(2026, 8, 10)  # hétfő
 
@@ -26,7 +31,7 @@ def counts(bad, size, population_bad, population):
 
 
 def cid(items, measure="pickup_delay"):
-    from learning.mining import pattern_key
+    from learning.mining.pattern import pattern_key
     return make_candidate_id(measure, pattern_key(items))
 
 

@@ -1,14 +1,14 @@
-import itertools
+from datetime import datetime, timedelta
 import math
 import random
 import unittest
-from datetime import datetime, timedelta
 
 from learning import MEASURES_BY_KEY, MiningParams, TicketProfile, build_profile, mine
-from learning.baseline import freeze_baseline, non_overlapping, pattern_counts
-from learning.mining import benjamini_hochberg, binomial_sf
+from learning.mining.baseline import freeze_baseline, non_overlapping, pattern_counts
+from learning.mining.contrast_mining import benjamini_hochberg, binomial_sf
 from model.history_line import HistoryLine
 from model.incident import Incident
+
 
 PICKUP = MEASURES_BY_KEY["pickup_delay"]
 WEEKDAYS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")

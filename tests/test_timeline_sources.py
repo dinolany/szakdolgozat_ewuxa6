@@ -1,8 +1,8 @@
+from datetime import datetime
 import json
+from pathlib import Path
 import tempfile
 import unittest
-from datetime import datetime
-from pathlib import Path
 
 from simulation.timeline_selector import TimelineSelector
 

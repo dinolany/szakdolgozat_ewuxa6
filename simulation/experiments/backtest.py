@@ -19,57 +19,26 @@ Felismerés forgatókönyv-fajtánként:
 """
 
 from collections import defaultdict
-from dataclasses import dataclass, field
 from datetime import datetime, time, timedelta
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Set
 
-from model.diagnostics.core import MeasurementContext, Trigger
-from model.diagnostics.detectors.feature_usage import FeatureUsageDiagnosis
-from model.diagnostics.detectors.ping_pong import PingPongDiagnosis
-from learning.clusters import decision_load
-from learning.config import DiscoveryConfig
+from learning.discovery_config import DiscoveryConfig
+from learning.mining.clusters import decision_load
 from learning.runner import discover
-from model.knowledge.knowledge_base import KnowledgeView
+from model.diagnostics.core import MeasurementContext, Trigger
+from model.diagnostics.detectors.feature_usage.feature_usage_diagnosis import FeatureUsageDiagnosis
+from model.diagnostics.detectors.ping_pong import PingPongDiagnosis
+from model.knowledge.knowledge_view import KnowledgeView
+from simulation.experiments.day_signals import DaySignals
+from simulation.experiments.scenario_result import ScenarioResult
+
 
 MEASURE_OF_KIND = {"slow_pickup": "stint_pickup", "long_hold": "stint_hold", "ping_pong": "reassignments"}
-
-
-@dataclass
-class ScenarioResult:
-    name: str
-    kind: str
-    group: str
-    start: datetime
-    end: datetime
-    applied: int
-    first_detected: Optional[datetime] = None
-    days_in_fault: int = 0          # mért napok a hiba alatt
-    days_flagged: int = 0           # ebből a hibának tulajdonítható jelzés
-    natural_days: int = 0           # a tiszta futás is jelzett ugyanott (a hiba alatt)
-    natural_before: int = 0         # jelzés a hiba előtt (hibás futás; a tisztával egyezik)
-    flagged_groups: Dict[str, int] = field(default_factory=dict)   # mindenkire vonatkozó hibánál
-
-    @property
-    def delay_days(self) -> Optional[float]:
-        return (self.first_detected - self.start).total_seconds() / 86400 if self.first_detected else None
-
-    @property
-    def stability(self) -> float:
-        return self.days_flagged / self.days_in_fault if self.days_in_fault else 0.0
 
 
 def _has_group(result, group: str) -> bool:
     items = result.items + tuple(item for alternative in result.alternatives for item in alternative)
     return any(dim == "assignment_group" and value == group for dim, value in items)
-
-
-@dataclass
-class DaySignals:
-    candidates: int
-    hits: Dict[str, bool]
-    groups: Dict[str, Set[str]]     # mindenkire vonatkozó forgatókönyvnél: a jelző csoportok
-    unrelated: int
-    decisions: int                  # elemzői döntés a jelöltekhez, ha a csomópontokat egyben döntjük el
 
 
 def _day_signals(incidents, as_of, scenarios, truth_incidents, config, levels, knowledge, usage=None) -> DaySignals:

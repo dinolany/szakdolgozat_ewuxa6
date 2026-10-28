@@ -17,10 +17,10 @@ import argparse
 import copy
 import itertools
 import json
-import sys
 from pathlib import Path
+import sys
 
-from learning.config import DiscoveryConfig
+from learning.discovery_config import DiscoveryConfig
 from simulation.experiments.backtest import run_backtest
 from simulation.synthetic.compare import incidents_from_rows
 

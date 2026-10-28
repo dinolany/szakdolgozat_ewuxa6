@@ -20,19 +20,26 @@ bemutatott sorban, a tipp egyezése a szimulált elemző döntésével; forgató
 lett feladat.
 """
 
-from dataclasses import dataclass, field
 from datetime import datetime, time, timedelta
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
 
-from model.diagnostics.core import MeasurementContext, Trigger
-from model.diagnostics.detectors.feature_usage import FeatureUsageDiagnosis
-from learning.config import DiscoveryConfig
-from learning.generalize import suggestions as generalization_suggestions
-from learning.knowledge import Candidate, CandidateState, Rule, Scope, Verdict
-from learning.manager import DiscoveryManager
-from learning.mining import with_implied
+from learning.discovery_config import DiscoveryConfig
+from learning.discovery_manager import DiscoveryManager
+from learning.feedback.generalize import suggestions as generalization_suggestions
+from learning.mining.contrast_mining import with_implied
 from learning.runner import configure, run_discovery
-from model.knowledge.knowledge_base import KnowledgeBase, KnowledgeView
+from learning.state.candidate import Candidate
+from learning.state.candidate_state import CandidateState
+from learning.state.rule import Rule
+from learning.state.scope import Scope
+from learning.state.verdict import Verdict
+from model.diagnostics.core import MeasurementContext, Trigger
+from model.diagnostics.detectors.feature_usage.feature_usage_diagnosis import FeatureUsageDiagnosis
+from model.knowledge.knowledge_view import KnowledgeView
+from simulation.experiments.track import Track
+from simulation.experiments.tracked_fault import TrackedFault
+from storage.knowledge_base import KnowledgeBase
+
 
 MEASURE_OF_KIND = {"slow_pickup": "stint_pickup", "long_hold": "stint_hold", "ping_pong": "reassignments"}
 TIME_DIMENSIONS = {"weekday", "hour", "date"}
@@ -45,23 +52,11 @@ NOT_NOW_LIMIT = 2                 # ennyi "most nem" után a visszatérő zaj: E
 ELEMENT_LIMIT = 4                 # ennyi elvetett zajban szereplő elem: Ezt az elemet soha
 
 
-@dataclass
-class Fault:
-    name: str
-    kind: str
-    group: str
-    start: datetime
-    end: datetime
-    first_seen: Optional[str] = None       # először volt döntésre váró jelölt hozzá
-    first_shown: Optional[str] = None      # először került a napi keretbe (az elemző elé)
-    accepted: Optional[str] = None         # finding lett
-
-
 def _groups_of(candidate: Candidate) -> set:
     return {v for desc in candidate.descriptions() for d, v in with_implied(tuple(sorted(desc))) if d == "assignment_group"}
 
 
-def fault_of(candidate: Candidate, faults: Sequence[Fault], now: datetime) -> Optional[Fault]:
+def fault_of(candidate: Candidate, faults: Sequence[TrackedFault], now: datetime) -> Optional[TrackedFault]:
     """A megoldókulcs: melyik beültetett hibához tartozik a jelölt (ha bármelyikhez)."""
     for fault in faults:
         if fault.group == "*" or not (fault.start <= now <= fault.end + AFTER_FAULT):
@@ -81,21 +76,6 @@ def noise_action(candidate: Candidate) -> str:
     if candidate.not_now >= NOT_NOW_LIMIT:
         return "never_pattern"
     return "reject_once"
-
-
-@dataclass
-class Track:
-    """Egy kör (tanuló vagy összehasonlító) állapota és napi mérései."""
-    name: str
-    learning: bool
-    manager: DiscoveryManager
-    daily: List[Dict[str, Any]] = field(default_factory=list)
-    tips: List[bool] = field(default_factory=list)
-    generalizations: List[Dict[str, Any]] = field(default_factory=list)
-    fault_log: Dict[str, Dict[str, str]] = field(default_factory=dict)   # hiba -> első jelölt / elé került / finding
-    open_issues: Dict[str, Dict[str, Any]] = field(default_factory=dict)  # issue -> {candidate_id, opened}
-    noise_elements: Dict[tuple, int] = field(default_factory=dict)        # elvetett zajok elemei -> hányszor
-    suppressed_elements: List[str] = field(default_factory=list)
 
 
 def _knowledge(l1: str) -> KnowledgeBase:
@@ -163,7 +143,7 @@ def _suppress_elements(track: Track, candidate: Candidate, fault_values: set) ->
     return made
 
 
-def _day(track: Track, incidents, as_of: datetime, config: DiscoveryConfig, faults: Sequence[Fault],
+def _day(track: Track, incidents, as_of: datetime, config: DiscoveryConfig, faults: Sequence[TrackedFault],
          signals: List[Dict[str, Any]], record_faults: bool) -> Dict[str, Any]:
     m = track.manager
     report = run_discovery(m, incidents, as_of, config)
@@ -250,7 +230,7 @@ def run_learning_sim(
     progress: Optional[Callable[[Dict[str, Any], Optional[Dict[str, Any]]], None]] = None,
 ) -> Dict[str, Any]:
     l1 = manifest["l1"]
-    faults = [Fault(s["name"], s["kind"], s["group"], datetime.fromisoformat(s["start"]), datetime.fromisoformat(s["end"]))
+    faults = [TrackedFault(s["name"], s["kind"], s["group"], datetime.fromisoformat(s["start"]), datetime.fromisoformat(s["end"]))
               for s in manifest["scenarios"]]
     learning_config = DiscoveryConfig(config_path) if config_path else DiscoveryConfig()
     baseline_config = DiscoveryConfig(config_path) if config_path else DiscoveryConfig()

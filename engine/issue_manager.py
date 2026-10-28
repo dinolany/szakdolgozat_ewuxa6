@@ -3,7 +3,9 @@ from enum import Enum
 from typing import Any, Dict, Iterable
 
 from model.diagnostics.core import BaseDiagnosis, DiagnosticRun, MeasurementContext, WindowType, parse_timestamp
-from model.issue import Issue, IssueState
+from model.issue import Issue
+from model.issue_state import IssueState
+
 
 # Felhasználói döntéssel beállított állapotok: a mérés ezeket nem írja felül
 USER_STATES = {

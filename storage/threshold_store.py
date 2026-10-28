@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Iterable
 
+
 # A paraméterek két szekciója diagnosztikánként
 THRESHOLDS = "thresholds"
 WINDOW = "window"
