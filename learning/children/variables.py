@@ -69,9 +69,9 @@ def _var_nyitott(u: UnitContext):
 def _var_csoport(u: UnitContext):
     """Az almérés-nyelv „csoport” változó: a csoport (szakasznál az övé).
 
-    Hívja: az almérés-nyelv értelmezője (VARIABLES / FUNCTIONS tábla), children._moment_felvette,
-    children._moment_kapta, children._moment_vege, children._var_felvetel_munkaperc, children._var_munkarend_ismert,
-    children._var_szakasz_munkaperc, children._var_szint."""
+    Hívja: az almérés-nyelv értelmezője (VARIABLES / FUNCTIONS tábla), variables._moment_felvette,
+    variables._moment_kapta, variables._moment_vege, variables._var_felvetel_munkaperc, variables._var_munkarend_ismert,
+    variables._var_szakasz_munkaperc, variables._var_szint."""
     return u.stint.group if u.stint is not None else u.timeline.value_at("assignment_group")
 
 def _var_kovetkezo_csoport(u: UnitContext):
@@ -95,8 +95,8 @@ def _var_allapot(u: UnitContext):
 def _var_nyito_csoport(u: UnitContext):
     """Az almérés-nyelv „nyito_csoport” változó: a jegyet elsőként kapó csoport.
 
-    Hívja: az almérés-nyelv értelmezője (VARIABLES / FUNCTIONS tábla), children._moment_nyitas,
-    children._var_nyito_szint."""
+    Hívja: az almérés-nyelv értelmezője (VARIABLES / FUNCTIONS tábla), variables._moment_nyitas,
+    variables._var_nyito_szint."""
     return u.timeline.first_value("assignment_group")
 
 def _var_zaro_csoport(u: UnitContext):
@@ -146,7 +146,7 @@ def _var_jegy_lezarva(u: UnitContext):
 def _var_elozo_csoport(u: UnitContext):
     """A csoport, amelyik ráadta a jegyet (az előző szakasz csoportja); a nyitó csoportnál és ticketnél üres.
 
-    Hívja: az almérés-nyelv értelmezője (VARIABLES / FUNCTIONS tábla), children._var_elozo_szint."""
+    Hívja: az almérés-nyelv értelmezője (VARIABLES / FUNCTIONS tábla), variables._var_elozo_szint."""
     if u.stint is None or u.stint.index == 0:
         return ""
     return u.timeline.stints[u.stint.index - 1].group
@@ -170,13 +170,13 @@ DEFAULT_SCHEDULE = Schedule(frozenset(range(5)), 8, 17, "hivatali idő")
 def _schedule_of(u: UnitContext, group: str) -> Schedule:
     """A csoport munkaideje: a saját (tanult vagy kézi), különben a cégszintű, különben a hivatali idő.
 
-    Hívja: children._time_variables, children._var_felvetel_munkaperc, children._var_szakasz_munkaperc."""
+    Hívja: variables._time_variables, variables._var_felvetel_munkaperc, variables._var_szakasz_munkaperc."""
     return u.schedules.get(group) or DEFAULT_SCHEDULE
 
 def _in_working_time(schedule: Schedule, moment: datetime) -> bool:
     """Egy pillanat a munkaidőbe esik-e.
 
-    Hívja: children._time_variables."""
+    Hívja: variables._time_variables."""
     return schedule.working_seconds(moment, moment + timedelta(seconds=1)) > 0
 
 def _moment_nyitas(u: UnitContext):
@@ -270,7 +270,7 @@ INTERACTION_FIELDS = frozenset({
 def _terminal_moment(u: UnitContext) -> Optional[datetime]:
     """A szakasz lezáró mentésének ideje (lezárás vagy továbbítás); még tartó szakasznál nincs.
 
-    Hívja: children._interactions, children._moment_vege."""
+    Hívja: variables._interactions, variables._moment_vege."""
     if u.stint is not None:
         return None if u.stint.is_open else u.stint.end
     return u.timeline.first_closed_at
@@ -279,7 +279,7 @@ def _interactions(u: UnitContext, after: Optional[datetime] = None) -> List[Any]
     """Az eset érdemi lépései (munkajegyzet, komment, besorolás…), a lezáró vagy továbbító mentés előtt; opcionálisan
     csak egy pillanat után.
 
-    Hívja: children._var_interakciok, children._var_interakciok_felvetel_utan."""
+    Hívja: variables._var_interakciok, variables._var_interakciok_felvetel_utan."""
     terminal = _terminal_moment(u)
     return [c for c in u.own_changes()
             if c.field in INTERACTION_FIELDS and c.new != c.old
@@ -289,8 +289,8 @@ def _pickup(u: UnitContext):
     """A névre vétel: szakasznál a szakasz felvétele (a továbbítás mentésében kapott felelőssel együtt,
     ugyanúgy, mint a felvételi idő mérése), ticketnél az első felelős.
 
-    Hívja: children._moment_felvette, children._var_elso_lepes_felvetel_utan, children._var_felvetel_munkaperc,
-    children._var_felvetel_perc, children._var_felvetel_utan_perc, children._var_interakciok_felvetel_utan."""
+    Hívja: variables._moment_felvette, variables._var_elso_lepes_felvetel_utan, variables._var_felvetel_munkaperc,
+    variables._var_felvetel_perc, variables._var_felvetel_utan_perc, variables._var_interakciok_felvetel_utan."""
     if u.stint is not None:
         return u.stint.first_assignment
     return next((c for c in u.timeline.changes if c.field == "assigned_to" and c.new), None)
@@ -300,7 +300,7 @@ IN_PROGRESS_STATE = "2"   # "folyamatban": a névre vétel rutinszerű kísérő
 def _kind(change: Any) -> Optional[str]:
     """Egy változás fajtája a „felvétel utáni első lépés” változóhoz: lezaras, allapot, atadas, interakcio vagy semmi.
 
-    Hívja: children._var_elso_lepes_felvetel_utan."""
+    Hívja: variables._var_elso_lepes_felvetel_utan."""
     if change.field == "state":
         if change.new == IN_PROGRESS_STATE:
             return None

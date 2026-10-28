@@ -142,7 +142,7 @@ class DiscoveryConfig:
         """A feltárás paraméterei (alapértékek, a fájlból felülírva).
 
         Létrehozza: backtest, discovery_cli, tune, synthetic.backtest, synthetic.learning_sim,
-        models.discovery.service."""
+        learning.discovery_service."""
         self.storage_path = Path(storage_path) if storage_path else None
         self.values: Dict[str, Dict[str, Any]] = {
             section: resolve_params(definitions, {}) for section, definitions in DEFINITIONS.items()

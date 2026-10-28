@@ -38,7 +38,7 @@ COUNT_BINS = (0, 1, 2, 3, 4, 5, 6, 8, 10)
 def dimension_label(dim: str, scope: str) -> str:
     """A csoport kétféle értelme: a szakasznál akinél a mintavételkor volt, a ticketnél a jegy útja.
 
-    Hívja: analysis.analyze_candidate, analysis.breakdown."""
+    Hívja: candidate_analysis.analyze_candidate, candidate_analysis.breakdown."""
     if dim == "assignment_group":
         return "csoport a mintavételkor (akinél a szakasz alatt volt)" if scope == "stint" else "a jegy útjába eső csoportok"
     return DIMENSION_LABELS.get(dim, dim)
@@ -46,7 +46,7 @@ def dimension_label(dim: str, scope: str) -> str:
 def _value_text(dim: str, value: str) -> str:
     """Egy mezőérték olvasható alakja (a hét napja magyarul, az óra sávként).
 
-    Hívja: DiscoveryService.about, analysis.analyze_candidate, analysis.breakdown, analysis.describe_condition."""
+    Hívja: DiscoveryService.about, candidate_analysis.analyze_candidate, candidate_analysis.breakdown, candidate_analysis.describe_condition."""
     if dim == "weekday":
         return WEEKDAY_LABELS.get(value, value)
     if dim == "hour":
@@ -56,7 +56,7 @@ def _value_text(dim: str, value: str) -> str:
 def describe_condition(dim: str, value: str, scope: str) -> str:
     """Egy mintafeltétel szavakban; az időbeli dimenzió ticketnél a nyitás, szakasznál az érkezés ideje.
 
-    Hívja: DiscoveryService.about, analysis.analyze_candidate."""
+    Hívja: DiscoveryService.about, candidate_analysis.analyze_candidate."""
     label = DIMENSION_LABELS.get(dim, dim)
     if dim in TIME_DIMENSIONS:
         when = "a csoporthoz érkezés" if scope == "stint" else "a ticket nyitásának"
@@ -118,7 +118,7 @@ def brief(analysis: Mapping[str, Any], examples: int = 3) -> Dict[str, Any]:
 def _bins(kind: str):
     """A mért érték hisztogramjának sávhatárai és címkéi (időtartamnál órában, darabszámnál darabban).
 
-    Hívja: analysis.analyze_candidate."""
+    Hívja: candidate_analysis.analyze_candidate."""
     edges = DURATION_BINS if kind == "duration" else COUNT_BINS
     labels = [f"{lo}–{hi}" for lo, hi in zip(edges, edges[1:])] + [f"{edges[-1]}+"]
     return edges, labels
@@ -126,7 +126,7 @@ def _bins(kind: str):
 def _bin_index(edges, value: float) -> int:
     """Melyik hisztogram-sávba esik egy érték.
 
-    Hívja: analysis.analyze_candidate."""
+    Hívja: candidate_analysis.analyze_candidate."""
     for index in range(len(edges) - 1):
         if value < edges[index + 1]:
             return index

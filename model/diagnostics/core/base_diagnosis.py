@@ -95,7 +95,7 @@ class BaseDiagnosis(ABC):
         return list(dict.fromkeys(items))   # ismétlés nélkül, sorrendtartóan
 
     def thresholds_for(self, ctx: MeasurementContext, subject: str, details: Mapping[str, Any]) -> Tuple[Dict[str, Any], Dict[str, str]]:
-        """A mért esetre érvényes küszöbök: kézi > tanult > globális (models.diagnostics.core.threshold_overrides)."""
+        """A mért esetre érvényes küszöbök: kézi > tanult > globális (model.diagnostics.core.threshold_override)."""
         base = self.thresholds(ctx)
         overrides = getattr(ctx.knowledge, "threshold_overrides", ())
         if not overrides:

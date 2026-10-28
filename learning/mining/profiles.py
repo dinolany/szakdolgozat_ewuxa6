@@ -40,8 +40,8 @@ SLA_ESCALATED_VALUES = {"1", "true"}
 def dimension_values(dimensions: Mapping[str, DimensionValue], dim: str) -> Tuple[str, ...]:
     """Egy mező értékei az adatlapon (a több értékű mezők, pl. a jegy útja, listaként).
 
-    Hívja: analysis.analyze_candidate, analysis.breakdown, compare.window_summary, profile.dimension_items,
-    profile.has_value, trend._counts."""
+    Hívja: candidate_analysis.analyze_candidate, candidate_analysis.breakdown, compare.window_summary, profiles.dimension_items,
+    profiles.has_value, trend._counts."""
     value = dimensions.get(dim)
     if value is None or value == "":
         return ()
@@ -50,26 +50,26 @@ def dimension_values(dimensions: Mapping[str, DimensionValue], dim: str) -> Tupl
 def has_value(dimensions: Mapping[str, DimensionValue], dim: str, value: str) -> bool:
     """Illik-e a dimenzió az értékre (több értékű dimenziónál: szerepel-e köztük).
 
-    Hívja: DiscoveryService._unit_sets, analysis.analyze_candidate, analysis.breakdown, baseline.pattern_counts,
-    pattern_finding._matches."""
+    Hívja: DiscoveryService._unit_sets, candidate_analysis.analyze_candidate, candidate_analysis.breakdown, baseline.pattern_counts,
+    pattern_finding_diagnosis._matches."""
     return value in dimension_values(dimensions, dim)
 
 def dimension_items(dimensions: Mapping[str, DimensionValue]) -> List[Tuple[str, str]]:
     """A dimenzió-érték párok rendezve (több értékű dimenzió minden értéke külön pár).
 
-    Hívja: mining.mine."""
+    Hívja: contrast_mining.mine."""
     return sorted((dim, value) for dim in dimensions for value in dimension_values(dimensions, dim))
 
 def _time_dimensions(moment: datetime) -> Dict[str, str]:
     """Egy pillanat időbeli mezői (dátum, a hét napja, óra).
 
-    Hívja: profile._stint_profile, profile.profile_from_timeline."""
+    Hívja: profiles._stint_profile, profiles.profile_from_timeline."""
     return {"date": moment.date().isoformat(), "weekday": _WEEKDAYS[moment.weekday()], "hour": f"{moment.hour:02d}"}
 
 def _distinct_values(timeline: TicketTimeline, name: str) -> DimensionValue:
     """Egy mező eltérő értékei a jegy élete során.
 
-    Hívja: profile.profile_from_timeline."""
+    Hívja: profiles.profile_from_timeline."""
     values: List[str] = []
     for change in timeline.changes_of(name):
         if change.new and change.new not in values:
@@ -89,7 +89,7 @@ def build_profile(incident: Incident, as_of: datetime, levels: Optional[Mapping[
 def profile_from_timeline(timeline: TicketTimeline, levels: Optional[Mapping[str, str]] = None) -> TicketProfile:
     """A ticket adatlapja az idővonalból (mezők és mérések).
 
-    Hívja: profile.build_profile, profile.build_profiles."""
+    Hívja: profiles.build_profile, profiles.build_profiles."""
     incident_id, as_of, opened_at = timeline.incident_id, timeline.as_of, timeline.opened_at
     levels = levels or {}
 
@@ -142,17 +142,17 @@ def stint_profiles(timeline: TicketTimeline, levels: Optional[Mapping[str, str]]
     dimenziók az érkezés időpontjából (pl. a szombaton érkezett, nem a szombaton nyitott ticket).
     
 
-    Hívja: profile.build_profiles."""
+    Hívja: profiles.build_profiles."""
     levels = levels or {}
     schedules = schedules or {}
     return [_stint_profile(timeline, stint, schedules.get(stint.group)) for stint in timeline.stints
             if levels.get(stint.group) != L1_LEVEL]
 
 def _stint_profile(timeline: TicketTimeline, stint: Stint, schedule: Optional[Any] = None) -> TicketProfile:
-    """`schedule`: a csoport munkaideje (models.working_time.Schedule); ha ismert, a felvételi és a hold idő
+    """`schedule`: a csoport munkaideje (model.working_time.Schedule); ha ismert, a felvételi és a hold idő
     munkaórában számít (a munkaidőn kívüli várakozás nem késés).
 
-    Hívja: profile.stint_profiles."""
+    Hívja: profiles.stint_profiles."""
     elapsed = (lambda a, b: schedule.working_hours(a, b)) if schedule is not None else hours_between
     incident_id = timeline.incident_id
     arrival = timeline.values_at(stint.start)
@@ -199,7 +199,7 @@ def build_profiles(
     dimenzióként kerül az adatlapra, így a mintakeresés az elemző logikája szerint is bonthat.
     
 
-    Hívja: DiscoveryService._profiles, PatternFindingDiagnosis.window_profiles, analysis.analyze_candidate,
+    Hívja: DiscoveryService._profiles, PatternFindingDiagnosis.window_profiles, candidate_analysis.analyze_candidate,
     runner._mine_trends, runner.backfill_counts, runner.discover, runner.run_discovery."""
     extra = None
     if derived:

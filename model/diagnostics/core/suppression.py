@@ -13,7 +13,7 @@ from typing import Any, Dict, Iterable, Mapping, Optional, Sequence, Set, Tuple
 
 def values_of(items: Iterable[Tuple[str, Any]]) -> Dict[str, Set[str]]:
     """Leírás (mező, érték) párokból mezőnként az értékek halmaza (egy mezőnek több értéke is lehet).
-    Hívja: suppressing_rule, és a jelöltek szabályillesztése (models.discovery.knowledge.match_rule)."""
+    Hívja: suppressing_rule, és a jelöltek szabályillesztése (learning.state.rule.match_rule)."""
     values: Dict[str, Set[str]] = {}
     for dim, value in items:
         values.setdefault(str(dim), set()).add(str(value))
@@ -23,9 +23,9 @@ def values_of(items: Iterable[Tuple[str, Any]]) -> Dict[str, Set[str]]:
 def conditions_match(conditions: Sequence[Mapping[str, Any]], values: Mapping[str, Set[str]]) -> bool:
     """Egy szabály feltételei ([{dim, values}]) mind teljesülnek-e: a mező valamelyik értéke a felsoroltak közt van,
     vagy a "*" a mező bármely értékét jelenti. Az egyetlen szabályillesztés a rendszerben: ezt hívja a jelöltekre a
-    models.discovery.knowledge.match_rule, a detektorokra a suppressing_rule.
+    learning.state.rule.match_rule, a detektorokra a suppressing_rule.
 
-    Hívja: knowledge.match_rule, suppression.suppressing_rule."""
+    Hívja: rule.match_rule, suppression.suppressing_rule."""
     return all((values.get(c["dim"], set()) & set(c["values"])) or ("*" in c["values"] and c["dim"] in values)
                for c in conditions)
 

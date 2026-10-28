@@ -26,7 +26,7 @@ class Fact:
     def is_active(self, now: str) -> bool:
         """A tény érvényes-e a megadott pillanatban.
 
-        Hívja: KnowledgeBase.active_facts, knowledge.match_rule."""
+        Hívja: KnowledgeBase.active_facts, rule.match_rule."""
         return self.state == RuleState.ACTIVE.value and (not self.valid_until or not now or now <= self.valid_until)
 
     def to_dict(self) -> Dict[str, Any]:

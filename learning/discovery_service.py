@@ -1576,7 +1576,7 @@ class DiscoveryService:
 
     def _threshold_suggestions(self, now: datetime) -> List[Dict[str, Any]]:
         """Tanult küszöb-javaslatok: ahol egy entitás (service, csoport, alkategória) jegyeinek többsége túllépi a
-        detektor globális küszöbét, ott a túllépés a szokásos (models.discovery.learned_thresholds).
+        detektor globális küszöbét, ott a túllépés a szokásos (learning.feedback.learned_thresholds).
 
         Hívja: DiscoveryService.review."""
         db_data = self.repository._load_db()

@@ -12,5 +12,5 @@ def pattern_key(items: Iterable[Item]) -> str:
 
     Hívja: DiscoveryManager.ingest_signals, DiscoveryService._refinements, DiscoveryService.knowledge_overview,
     PatternFindingDiagnosis.observe_definition, PatternResult.alternative_keys, PatternResult.key,
-    knowledge.match_rule, mining.mine, pattern_finding.finding_subject."""
+    rule.match_rule, contrast_mining.mine, pattern_finding_diagnosis.finding_subject."""
     return "&".join(f"{dimension}={value}" for dimension, value in sorted(items))

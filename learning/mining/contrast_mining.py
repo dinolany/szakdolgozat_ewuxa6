@@ -41,13 +41,13 @@ DIMENSION_CLASSES = {"weekday": "nap", "date": "nap", "hour": "óra", "assignmen
 def dimension_class(dimension: str) -> str:
     """A mező fajtája a bontási utakhoz (pl. a hét napja és a dátum „nap”, a csoportmezők „csoport”).
 
-    Hívja: generalize.suggestions, mining.path_blocked."""
+    Hívja: generalize.suggestions, contrast_mining.path_blocked."""
     return DIMENSION_CLASSES.get(dimension, dimension)
 
 def path_blocked(parent_dimensions: Iterable[str], child_dimension: str, blocked: Iterable[Tuple[str, str]]) -> bool:
     """Tiltott-e a bontás: a szülő bármely mezőjének fajtájából a bontó mezőbe vezető út tanult zsákutca.
 
-    Hívja: DiscoveryService._filtered_breakdown, DiscoveryService._refinements, mining.mine."""
+    Hívja: DiscoveryService._filtered_breakdown, DiscoveryService._refinements, contrast_mining.mine."""
     blocked = set(blocked)
     child = dimension_class(child_dimension)
     return any((dimension_class(d), child) in blocked or (dimension_class(d), child_dimension) in blocked
@@ -57,7 +57,7 @@ def path_blocked(parent_dimensions: Iterable[str], child_dimension: str, blocked
 def binomial_sf(k: int, n: int, p: float) -> float:
     """P(X >= k), X ~ Binomiális(n, p); log-térben számolva a numerikus stabilitásért.
 
-    Hívja: baseline.compare_to_baseline, mining.mine, pattern_finding.measure_pattern, trend.mine_trends."""
+    Hívja: baseline.compare_to_baseline, contrast_mining.mine, pattern_finding_diagnosis.measure_pattern, trend.mine_trends."""
     if k <= 0:
         return 1.0
     if k > n or p <= 0.0:
@@ -75,7 +75,7 @@ def binomial_sf(k: int, n: int, p: float) -> float:
 def benjamini_hochberg(p_values: Sequence[float]) -> List[float]:
     """Benjamini–Hochberg szerint korrigált q-értékek, az eredeti sorrendben.
 
-    Hívja: mining.mine, trend.mine_trends."""
+    Hívja: contrast_mining.mine, trend.mine_trends."""
     m = len(p_values)
     order = sorted(range(m), key=lambda index: p_values[index])
     q_values = [1.0] * m
@@ -89,7 +89,7 @@ def benjamini_hochberg(p_values: Sequence[float]) -> List[float]:
 def _valid_combination(items: Pattern) -> bool:
     """Egy mintaelem-kombináció értelmes-e (pl. nem ugyanaz a mező kétszer, nem a dátum és a hét napja együtt).
 
-    Hívja: mining.mine."""
+    Hívja: contrast_mining.mine."""
     dimensions = [dimension for dimension, _ in items]
     if len(set(dimensions)) < len(dimensions):
         return False
@@ -101,8 +101,8 @@ def with_implied(items: Pattern) -> Pattern:
     """A minta a belőle következő elemekkel bővítve (a dátum meghatározza a hét napját).
 
     Hívja: DiscoveryCli.cmd_reject, DiscoveryManager._covering_finding, DiscoveryService._run_probes,
-    analysis.analyze_candidate, backlog.candidate_groups, children.trigger_matches, clusters._items_of,
-    clusters.reach, knowledge.match_rule és mások."""
+    candidate_analysis.analyze_candidate, backlog.candidate_groups, child_def.trigger_matches, clusters._items_of,
+    clusters.reach, rule.match_rule és mások."""
     values = dict(items)
     if "date" in values and "weekday" not in values:
         try:
@@ -116,7 +116,7 @@ def _generalizations(items: Pattern) -> Iterable[Pattern]:
     """A minta valódi általánosításai, a következményelemeket is figyelembe véve
     (pl. a 'G & 2026-08-09' általánosítása a 'G & vasárnap' is).
 
-    Hívja: mining.mine."""
+    Hívja: contrast_mining.mine."""
     expanded = with_implied(items)
     for order in range(1, len(expanded) + 1):
         for sub in itertools.combinations(expanded, order):
@@ -289,7 +289,7 @@ def _prefer_full_dimensions(result: PatternResult, suppressed: FrozenSet[str]) -
     """Azonos esethalmaz leírásai közül a szűkítő (alap)mezőt nem tartalmazók maradnak: ha ugyanazt a halmazt
     egy csoport is leírja, az "impact=4 & ..." leírás csak zaj. Ha csak szűkítő mezős leírás van, az marad.
 
-    Hívja: mining.mine."""
+    Hívja: contrast_mining.mine."""
     if not suppressed:
         return result
     def clean(items: Pattern) -> bool:
@@ -304,7 +304,7 @@ def _prefer_full_dimensions(result: PatternResult, suppressed: FrozenSet[str]) -
 def _rank(result: PatternResult):
     """Erősebb előbb; egyenlőségnél a rövidebb (egyszerűbb) leírás, végül betűrend (determinisztikus).
 
-    Hívja: mining.merge_equivalent (hivatkozás), mining.mine (hivatkozás)."""
+    Hívja: contrast_mining.merge_equivalent (hivatkozás), contrast_mining.mine (hivatkozás)."""
     return (result.p_value, -result.excess, len(result.items), result.key)
 
 def merge_equivalent(results: Sequence[PatternResult]) -> List[PatternResult]:
@@ -314,7 +314,7 @@ def merge_equivalent(results: Sequence[PatternResult]) -> List[PatternResult]:
     alternatívaként marad meg: a gép nem tudja eldönteni, melyik mező a lényeg, az elemző igen.
     
 
-    Hívja: mining.mine."""
+    Hívja: contrast_mining.mine."""
     groups: Dict[Tuple[str, FrozenSet[str]], List[PatternResult]] = {}
     for result in sorted(results, key=_rank):
         groups.setdefault((result.measure, frozenset(result.bad_incident_ids)), []).append(result)

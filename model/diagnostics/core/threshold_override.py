@@ -42,7 +42,7 @@ class ThresholdOverride:
     def matches(self, diagnostic: str, items: Iterable[Tuple[str, str]]) -> bool:
         """A küszöb hatóköre illik-e a mért eset leírására (minden hatóköri elem szerepel benne).
 
-        Hívja: threshold_overrides.resolve."""
+        Hívja: threshold_override.resolve."""
         present = {(str(d), str(v)) for d, v in items}
         return self.diagnostic == diagnostic and all((str(d), str(v)) in present for d, v in self.scope)
 

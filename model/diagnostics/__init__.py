@@ -1,6 +1,5 @@
-"""Incident diagnosztikák, mind a core keretrendszeren (models.diagnostics.core).
+"""A gyári detektorok: a közös keretrendszer (core/), a konkrét detektorok (detectors/) és a nyilvántartás.
 
-A konkrét diagnosztikákat a moduljukból importáljuk (pl. models.diagnostics.ping_pong); a csomag
-szándékosan nem tölti be őket, mert egy részük a feltárásra épül, a feltárás pedig a diagnosztikák
-segédmoduljaira (körkörös import). A szerkezet leírása: docs/DIAGNOSTICS.md.
+A konkrét detektorokat a moduljukból importáljuk (pl. model.diagnostics.detectors.ping_pong); a csomag nem tölti
+be őket előre. A szerkezet leírása: docs/ARCHITECTURE.md (6. fejezet) és docs/DIAGNOSTICS.md.
 """

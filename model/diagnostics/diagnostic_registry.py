@@ -28,7 +28,7 @@ class DiagnosticRegistry:
 
     def register(self, diagnostic: Any) -> BaseDiagnosis:
         if not isinstance(diagnostic, BaseDiagnosis):
-            raise TypeError(f"Nem core diagnosztika: {type(diagnostic).__name__} (models.diagnostics.core alaposztály kell)")
+            raise TypeError(f"Nem core diagnosztika: {type(diagnostic).__name__} (model.diagnostics.core alaposztály kell)")
         for existing in self._diagnostics:
             if existing.key == diagnostic.key:
                 raise ValueError(f"Már regisztrált diagnosztika: {diagnostic.key}")

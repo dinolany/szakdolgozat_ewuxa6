@@ -35,13 +35,13 @@ class Rule:
     def is_active(self, now: str) -> bool:
         """A szabály érvényes-e a megadott pillanatban (aktív, és nem járt le).
 
-        Hívja: DiscoveryManager.apply_rules, DiscoveryService.detector_rules, knowledge.match_rule."""
+        Hívja: DiscoveryManager.apply_rules, DiscoveryService.detector_rules, rule.match_rule."""
         return self.state == RuleState.ACTIVE.value and (not self.valid_until or now <= self.valid_until)
 
     def measure_applies(self, measure_key: str) -> bool:
         """A szabály vonatkozik-e erre a mérésre (vagy detektorra).
 
-        Hívja: knowledge.match_rule."""
+        Hívja: rule.match_rule."""
         mode = self.measure_filter.get("mode", "any")
         if mode == "list":
             return measure_key in self.measure_filter.get("measures", [])

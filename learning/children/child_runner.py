@@ -16,7 +16,7 @@ MAX_UNITS = 2000         # egy oldalon legfeljebb ennyi esetet értékelünk ki 
 def _thin(units: Sequence[UnitRef]) -> List[UnitRef]:
     """Legfeljebb MAX_UNITS eset (determinisztikus ritkítással), hogy egy almérés nagy adaton se legyen lassú.
 
-    Hívja: children.measure_groups, children.measure_units."""
+    Hívja: child_runner.measure_groups, child_runner.measure_units."""
     units = sorted(set(units), key=lambda u: (u[0], -1 if u[1] is None else u[1]))
     if len(units) <= MAX_UNITS:
         return units
@@ -27,7 +27,7 @@ def measure_units(tree: ast.Expression, units: Sequence[UnitRef], timeline_of: C
                   levels: Mapping[str, str], schedules: Optional[Mapping[str, Schedule]] = None) -> Tuple[int, int, List[str]]:
     """(kiértékelt esetek, ahol igaz, néhány incidens ahol igaz).
 
-    Hívja: children.run_child."""
+    Hívja: child_runner.run_child."""
     n = hits = 0
     examples: List[str] = []
     for incident_id, index in _thin(units):
@@ -50,7 +50,7 @@ def measure_groups(tree: ast.Expression, units: Sequence[UnitRef], timeline_of: 
                    levels: Mapping[str, str], schedules: Optional[Mapping[str, Schedule]] = None) -> Tuple[int, Dict[str, int], Dict[str, List[str]]]:
     """Csoportosítás: (kiértékelt esetek, értékenkénti darabszám, értékenként néhány incidens).
 
-    Hívja: children._run_group."""
+    Hívja: child_runner._run_group."""
     n = 0
     counts: Dict[str, int] = {}
     examples: Dict[str, List[str]] = {}
@@ -77,7 +77,7 @@ def _run_group(child: ChildDef, affected, reference, timeline_of, levels, now, s
     """Csoportosító almérés: az érintett esetek hogyan oszlanak meg az érték szerint, a többihez képest. Teljesül, ha az
     érintettek legalább `threshold` hányada egyetlen értékre esik (az eltérés egy csoportba sűrűsödik).
 
-    Hívja: children.run_child."""
+    Hívja: child_runner.run_child."""
     tree = compile_expression(child.expression)
     n, counts, examples = measure_groups(tree, affected, timeline_of, levels, schedules)
     rn, rcounts, _ = measure_groups(tree, reference, timeline_of, levels, schedules)
@@ -138,7 +138,7 @@ def run_child(child: ChildDef, affected: Sequence[UnitRef], reference: Sequence[
     """Egy almérés lefuttatása: az érintett és az összehasonlító eseteken mért arány (ellenőrzésnél) vagy megoszlás
     (csoportosításnál), a teljesülés és a szöveges eredmény.
 
-    Hívja: DiscoveryService._run_children, DiscoveryService.children_action, children.run_probes."""
+    Hívja: DiscoveryService._run_children, DiscoveryService.children_action, probes.run_probes."""
     if child.method == "group":
         return _run_group(child, affected, reference, timeline_of, levels, now, schedules)
     tree = compile_expression(child.expression)
@@ -158,7 +158,7 @@ def run_child(child: ChildDef, affected: Sequence[UnitRef], reference: Sequence[
 def describe_result(name: str, role: str, n: int, hits: int, rn: int, rhits: int, triggered: bool) -> str:
     """Egy ellenőrző almérés eredménye szavakban (arány az érintetteknél és a többinél, ítélet).
 
-    Hívja: children.run_child, children.run_probes."""
+    Hívja: child_runner.run_child, probes.run_probes."""
     if n == 0:
         return f"{name}: nincs kiértékelhető érintett eset."
     text = f"{name}: az érintett esetek {hits / n:.0%}-ára igaz ({hits}/{n})"
@@ -175,7 +175,7 @@ def derived_evaluator(derived: Sequence[Tuple[str, ...]], levels: Mapping[str, s
     az érték "igen" / "nem", csoportosításnál a kifejezés értéke (üres érték nem kerül a leírásba).
     A hibás kifejezés kimarad (a feltárás nem állhat meg miatta).
 
-    Hívja: profile.build_profiles."""
+    Hívja: profiles.build_profiles."""
     compiled = []
     for entry in derived:
         name, expression = entry[0], entry[1]

@@ -6,7 +6,7 @@ csapatot érintő service-nél a sok átadás), és a detektor ott csak zajt ter
 percentilise legyen a mérsékelt küszöb (így a saját normájához képest kiugró jegy továbbra is jelez), az extrém
 küszöb ugyanannyival feljebb, mint a globálisnál.
 
-Elfogadva „tanult” szűkebb küszöb lesz (models.diagnostics.core.threshold_overrides); a kézzel adott küszöb nyer
+Elfogadva „tanult” szűkebb küszöb lesz (model.diagnostics.core.threshold_override); a kézzel adott küszöb nyer
 felette. Ez a modul tiszta: a megfigyelésekből számol, a végrehajtás a szolgáltatásé.
 """
 

@@ -10,7 +10,7 @@ from model.timeline.fields import canonical_field
 def _fn_ertek(u: UnitContext, name: Any) -> str:
     """Az almérés-nyelv „ertek” függvény: ertek("mező"): a mező értéke az eset végén.
 
-    Hívja: az almérés-nyelv értelmezője (VARIABLES / FUNCTIONS tábla), children._fn_ures."""
+    Hívja: az almérés-nyelv értelmezője (VARIABLES / FUNCTIONS tábla), expression_language._fn_ures."""
     return u.timeline.value_at(canonical_field(name), u.end)
 
 def _fn_ertek_kezdetkor(u: UnitContext, name: Any) -> str:
@@ -75,8 +75,8 @@ _ALLOWED = (ast.Expression, ast.BoolOp, ast.And, ast.Or, ast.UnaryOp, ast.Not, a
 def compile_expression(source: str) -> ast.Expression:
     """A kifejezés ellenőrzése; hibánál ValueError érthető üzenettel.
 
-    Hívja: DiscoveryManager.add_child, DiscoveryService.children_action, children._run_group,
-    children.derived_evaluator, children.rows_to_expression, children.run_child."""
+    Hívja: DiscoveryManager.add_child, DiscoveryService.children_action, child_runner._run_group,
+    child_runner.derived_evaluator, expression_language.rows_to_expression, child_runner.run_child."""
     text = str(source or "").strip()
     if not text:
         raise ValueError("Üres kifejezés.")
@@ -106,7 +106,7 @@ def compile_expression(source: str) -> ast.Expression:
 def _number(value: Any) -> Optional[float]:
     """Számmá alakít, ha lehet (különben None).
 
-    Hívja: children._compare, children._evaluate, children._fn_szam."""
+    Hívja: expression_language._compare, expression_language._evaluate, expression_language._fn_szam."""
     if isinstance(value, bool) or value is None:
         return None if value is None else float(value)
     if isinstance(value, (int, float)):
@@ -119,7 +119,7 @@ def _number(value: Any) -> Optional[float]:
 def _compare(op: ast.cmpop, left: Any, right: Any) -> bool:
     """Két érték összehasonlítása egy relációval (számként, ha mindkettő az; különben szövegként).
 
-    Hívja: children._evaluate."""
+    Hívja: expression_language._evaluate."""
     if isinstance(op, (ast.In, ast.NotIn)):
         container = right if isinstance(right, (list, tuple)) else [right]
         values = {str(v) for v in container}
@@ -139,7 +139,7 @@ def _evaluate(node: ast.AST, unit: UnitContext) -> Any:
     """A kifejezésfa egy csomópontjának kiértékelése egy eseten (saját, biztonságos értelmező: csak a megengedett
     műveletek, változók és függvények).
 
-    Hívja: children.evaluate, children.evaluate_value."""
+    Hívja: expression_language.evaluate, expression_language.evaluate_value."""
     if isinstance(node, ast.Expression):
         return _evaluate(node.body, unit)
     if isinstance(node, ast.BoolOp):
@@ -179,13 +179,13 @@ def _evaluate(node: ast.AST, unit: UnitContext) -> Any:
 def evaluate(tree: ast.Expression, unit: UnitContext) -> bool:
     """Egy lefordított kifejezés igaz-e az esetre (ellenőrző almérés, keresési szempont).
 
-    Hívja: children.derived_evaluator, children.measure_units."""
+    Hívja: child_runner.derived_evaluator, child_runner.measure_units."""
     return bool(_evaluate(tree, unit))
 
 def evaluate_value(tree: ast.Expression, unit: UnitContext) -> str:
     """Csoportosításhoz: a kifejezés értéke szövegként (üres érték: "").
 
-    Hívja: children.derived_evaluator, children.measure_groups."""
+    Hívja: child_runner.derived_evaluator, child_runner.measure_groups."""
     value = _evaluate(tree, unit)
     if value is None:
         return ""

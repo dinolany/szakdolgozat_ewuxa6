@@ -1,6 +1,6 @@
 # Diagnosztikai szerkezet
 
-Ez a leírás a diagnosztikák egyetlen keretrendszerét mutatja be (`models/diagnostics/core`).
+Ez a leírás a diagnosztikák egyetlen keretrendszerét mutatja be (`model/diagnostics/core`).
 Régi, párhuzamos osztályszerkezet nincs: minden diagnosztika ezen fut.
 
 ## Rétegek
@@ -9,18 +9,18 @@ Régi, párhuzamos osztályszerkezet nincs: minden diagnosztika ezen fut.
 history sorok (HistoryLine)
    │
    ▼
-models/timeline.py ─────────── a ticket útja egy adott pillanatig (as_of):
+model/timeline/ ─────────── a ticket útja egy adott pillanatig (as_of):
    │                            változások, csoportszakaszok (Stint), hold, saját / átadási változások
    │
-   ├──► models/discovery/ ───── feltárás: mintakeresés → jelölt → elemzői döntés → finding / szabály
+   ├──► learning/ ───── feltárás: mintakeresés → jelölt → elemzői döntés → finding / szabály
    │                            (a "tanuló" kör; jelöltsor, tipp, ismert eltérés, felülvizsgálat)
    │
-   └──► models/diagnostics/ ─── diagnosztikák: mérés → besorolás → Measurement → Issue
+   └──► model/diagnostics/detectors/ ─── diagnosztikák: mérés → besorolás → Measurement → Issue
               │
               ▼
-        issue_manager.py ────── az issue-k életciklusa (ACTIVE / NOT_RELEVANT / OUTDATED ...)
+        engine/issue_manager.py ────── az issue-k életciklusa (ACTIVE / NOT_RELEVANT / OUTDATED ...)
 
-models/knowledge_base.py ────── közös tudástár (tények): a feltárás írja, minden diagnosztika olvassa
+model/knowledge/ és storage/knowledge_base.py ────── közös tudástár (tények): a feltárás írja, minden diagnosztika olvassa
 ```
 
 Két alapelv:
@@ -77,7 +77,7 @@ Régi formátumú tárolt issue-k megtartásához felülírható az `issue_id_fo
 | `SLIDING` | `[vég − lookback, vég]`, mérésről mérésre csúszik | OUTDATED (az ablak elmúlt) |
 | `TUMBLING` | igazított, egymást nem fedő vödrök; minden vödör külön előfordulás | korábbi vödör issue-ja: OUTDATED |
 
-Issue-állapotok (`models/issue.py`): ACTIVE (túllépés), NOT_RELEVANT (mérve, küszöb alatt),
+Issue-állapotok (`model/issue.py`): ACTIVE (túllépés), NOT_RELEVANT (mérve, küszöb alatt),
 OUTDATED (időablakos, elmúlt), valamint a felhasználói állapotok (RESOLVED, SUPPRESSED, DECLINED,
 ARCHIVED, DELETED), amelyekhez a mérés nem nyúl.
 
@@ -103,7 +103,7 @@ funkciót több csoport sem használja, a jelzések egy csomópontba kerülnek (
 
 ## Lezárás tanulsággal
 
-Bármely issue (bármely diagnosztikából) lezárható tanulsággal (`models/discovery/lessons.py`, issue-panel ›
+Bármely issue (bármely diagnosztikából) lezárható tanulsággal (`learning/feedback/lessons.py`, issue-panel ›
 „Lezárás tanulsággal”, `POST /api/issues/lesson`). Az issue a nyomozás helye; a lezáráskor megadott tanulság a
 tudásba kerül, így a következő hasonló esetnél a gép már tudja:
 
@@ -114,7 +114,7 @@ tudásba kerül, így a következő hasonló esetnél a gép már tudja:
   (egyedi jegyre szóló szabály nem képződik), a diagnosztika jelzéseire szűkítve;
 - ismert eltérés: a minta saját normához mérve (csak feltárási mintánál).
 
-Utókövetés (`models/discovery/follow_up.py`), a lezáráskor választható: „javulást várok” (újramérhető, nem
+Utókövetés (`learning/feedback/follow_up.py`), a lezáráskor választható: „javulást várok” (újramérhető, nem
 jegyszintű issue-nál; a határidőn a legutóbbi mérés `details.measured_exceeded` értéke dönt: javult, vagy nem javult →
 az issue újranyílik) és „ne ismétlődjön” (bármely issue-nál; a határidőig figyeli, nyílik-e ugyanannál a
 diagnosztikánál a kijelölt hatókörre – pl. csoport – új issue; ha igen: megismétlődött). Az értékelés a napi körben fut;
@@ -178,7 +178,7 @@ létrejött tények és szabályok a szokásos módon felülvizsgálhatók és v
 
 ## Szűkebb hatókörű küszöbök (gyári detektorok)
 
-`models/diagnostics/core/threshold_overrides.py`. A detektor globális küszöbe csak alapértelmezés: minden mérésnél a
+`model/diagnostics/core/threshold_override.py`. A detektor globális küszöbe csak alapértelmezés: minden mérésnél a
 mért eset entitásaira (`BaseDiagnosis.entity_items`: a jelzés leírása, és egyetlen jegyet mérő detektornál a jegy
 útja, jelenlegi csoportja és service-e) illő felülírás dönt. Sorrend: kézi > tanult > globális; azonos forrásnál a
 szűkebb (több feltételű) hatókör nyer; paraméterenként. Ha nem a globális döntött, a mérés `details`-ében látszik:
@@ -189,7 +189,7 @@ módosítása azonnal hat és mindent újraértékel (időablakos detektornál a
 ablak teljes mérése is lefut), az egyéni küszöbök közben érvényben maradnak. Tárolás: tudástár
 (`threshold_overrides`, a reset nem törli).
 
-**Tanult küszöbök** (`models/discovery/learned_thresholds.py`, Javaslatok › Tanult küszöb-javaslatok): a jegyszintű,
+**Tanult küszöbök** (`learning/feedback/learned_thresholds.py`, Javaslatok › Tanult küszöb-javaslatok): a jegyszintű,
 mérsékelt / extrém küszöbös detektoroknál (most: ping-pong, visszanyitás) a gép service-enként, a jegy útjába eső
 csoportonként és alkategóriánként nézi, hányszor lépik túl a jegyek a globális küszöböt. Ahol legalább 8 jegyből
 legalább a fele túllépi, és a túllépés tartós (az első és az utolsó túllépő jegy között legalább 14 nap – egy friss
@@ -200,7 +200,7 @@ kérem” addig hallgattatja el, amíg a javasolt érték nem változik.
 
 ## A tanult tudás megbízhatósága
 
-- **Mentés** (`models/backup.py`): a „memória” két fájl – a tudástár (`knowledge.json`: tények, almérések, küszöbök,
+- **Mentés** (`storage/backup.py`): a „memória” két fájl – a tudástár (`knowledge.json`: tények, almérések, küszöbök,
   bontási szempontok, munkaidő, tanulságok) és a feltárási állapot (`discovery_state.json`: szabályok, döntések,
   jelöltek). Minden mentés után, ha az előző másolat óta legalább 10 perc eltelt, a kettő együtt egy datált mappába
   kerül (`backups/`, az utolsó 30 marad), és naponta egy külön másolat is (60 nap). Reset, újraindulás és
@@ -227,7 +227,7 @@ eseménycsomagonként mérnek, és a tanuló kör tudása rájuk is hat:
   csoportok, az útvonal (`route`, pl. „L1 > A > B”), a service, az alkategória, a bejelentés módja
   (`SingleTicketDiagnosis.signal_items`, `details.entity`). Ezekre épül a „nem hiba” tanulság szabálya, a szűkebb és a
   tanult küszöb hatóköre, jóváhagyásos módban pedig a csomópont és az elnyomás.
-- **Elnyomó szabály valós időben** (`models/diagnostics/core/suppression.py`): az erre a detektorra szóló aktív
+- **Elnyomó szabály valós időben** (`model/diagnostics/core/suppression.py`): az erre a detektorra szóló aktív
   elvető szabály (a mérés-szűrőjében a detektor kulcsa – pl. egy detektor-issue „nem hiba” lezárásából, vagy egy
   jelzés elnyomásából) a detektor saját issue-nyitását is megállítja: a túllépő, a szabályra illő esetből nem nyílik
   új issue; a már nyitott issue-k mérése folytatódik. A szabályokat a feltárási szolgáltatás adja az elemzőnek
@@ -236,7 +236,7 @@ eseménycsomagonként mérnek, és a tanuló kör tudása rájuk is hat:
 - **Ismert hiba valós időben** (`IssueManager._known_fault_returned`): a „valódi hiba” tanulsággal lezárt issue
   mérése minden csomagnál folytatódik; ha egyszer küszöb alá esett, majd újra túllép, ugyanabban a csomagban
   újranyílik („ismert hiba visszatért”). Az issue-ra írt adatok (tanulság, utókövetés, csatolt jelöltek, az ismert hiba
-  jelzői) a mérés frissítésekor megmaradnak (`models.issue.KEPT_DETAIL_KEYS`).
+  jelzői) a mérés frissítésekor megmaradnak (`model.issue.KEPT_DETAIL_KEYS`).
 - **Almérés.** Az öregedő backlog jelzésén csoportonként az öregedő és a csoport többi nyitott szakasza az almérés
   egysége (`BacklogAgingDiagnosis.child_units`); a funkcióhasználaté a funkció alkalmai. A jegyszintű jelzésnél
   (egyetlen jegy) almérés nem ítél, ott a csomópontok és a szabályok dolgoznak.
@@ -245,7 +245,7 @@ eseménycsomagonként mérnek, és a tanuló kör tudása rájuk is hat:
 
 ## Munkaidő
 
-`models/working_time.py`. A szakaszos felvételi és hold idő ott, ahol a csoport munkaideje ismert, munkaórában
+`model/working_time/`. A szakaszos felvételi és hold idő ott, ahol a csoport munkaideje ismert, munkaórában
 számít (`munkaido(csoport, napok, tol, ig)` tény → `KnowledgeView.schedules` → `build_profiles(..., schedules)`;
 az adatlapon `time_basis`: munkaóra / falióra, csak megjelenítés). A munkaidő forrása:
 
@@ -301,7 +301,7 @@ módszerek” alatt maradnak.
 
 ## Backlog-naptár
 
-Tanulás › Backlog-naptár (`models/discovery/backlog.py`, `GET /api/discovery/backlog?group=&days=`): egy csoport
+Tanulás › Backlog-naptár (`learning/analysis/backlog.py`, `GET /api/discovery/backlog?group=&days=`): egy csoport
 szakaszai napok × órák rácson – felvetlenül várakozó, nyitott vagy érkezett jegyek az óra közepén mintavételezve –, a
 csoport munkaidejével keretezve. Mellette a csoportot érintő jelöltek (a csoportra szóló minták, és azok, amelyeknek
 érintett esete ennél a csoportnál van); a kiválasztott jelölt kiemeli, amit időben leír (dátum, a hét napja, óra), és
@@ -316,7 +316,7 @@ pöttyökkel mutatja az érintett esetek érkezését. A kiválasztott jelöltr�
 - `facts` / `of_predicate(név)`: minden más.
 
 Diagnosztikába tudást attribútumként átadni tilos: csak a kontextusból olvasunk, így a fő elemző és
-a feltárási konzol ugyanazt látja. Új tényfajta: `PredicateDef` a `models/knowledge_base.py`-ban
+a feltárási konzol ugyanazt látja. Új tényfajta: `PredicateDef` a `model/knowledge/ és storage/knowledge_base.py`-ban
 (`kind="classify"`: csak osztályoz; `kind="drop"`: a feltárásban elvető tudásszabály tartozik hozzá).
 
 ## A diagnosztikák
@@ -335,7 +335,7 @@ a feltárási konzol ugyanazt látja. Új tényfajta: `PredicateDef` a `models/k
 
 ## A tanuló kör a futó rendszerben
 
-`models/discovery/service.py` (`DiscoveryService`) köti össze a feltárást a fő elemzővel:
+`learning/discovery_service.py` (`DiscoveryService`) köti össze a feltárást a fő elemzővel:
 
 - a szimuláció kötegei után virtuális naponta egyszer fut (`IncidentEventProcessor` → `after_batch`),
   a dashboard „Tanulás” nézetéből kézzel is indítható;
@@ -345,8 +345,8 @@ a feltárási konzol ugyanazt látja. Új tényfajta: `PredicateDef` a `models/k
 - a finding PATTERN_FINDING issue-ként kerül a fő adatbázisba (az elemző diagnosztikájával, a saját
   küszöbeivel mérve);
 - tény felvételekor / visszavonásakor az elemző újramér (a tények a diagnosztikák eredményét alakítják);
-- két jelöltforrás: a *kontrasztkereső* (`mining.py`: a minta a többi egységhez képest kiugró ugyanabban az
-  időszakban) és a *saját múlt* (`trend.py`: egy entitás – csoport, service, alkategória, felelős egység,
+- két jelöltforrás: a *kontrasztkereső* (`learning/mining/contrast_mining.py`: a minta a többi egységhez képest kiugró ugyanabban az
+  időszakban) és a *saját múlt* (`learning/mining/trend.py`: egy entitás – csoport, service, alkategória, felelős egység,
   helyszín – a saját előző heteihez képest romlott, a populációval együtt mozgó változást kiszűrve; az
   elfogadott findingok rossz egységei kimaradnak a múltból). A kettő külön jelölt (`Candidate.kind`);
 - a dimenziók szerepe a keresésben (Paraméterek › `dimensions`): 2 teljes, 1 csak szűkítő (önmagában nem minta,
@@ -356,11 +356,11 @@ a feltárási konzol ugyanazt látja. Új tényfajta: `PredicateDef` a `models/k
 - csoport-mezők: `current_group` = a jegyhez rendelt csoport (az incidens assignment értéke a mérés
   pillanatában, csak megjelenítésre); `assignment_group` szakasznál = akinél a mintavételkor volt, ticketnél
   = a jegy útjába eső csoportok;
-- döntési csomópontok (`models/discovery/clusters.py`): a jelölt *hatóköre* (döntésre váró szűkítései)
+- döntési csomópontok (`learning/mining/clusters.py`): a jelölt *hatóköre* (döntésre váró szűkítései)
   előrébb sorolja; a közös entitás-részminták (csoport, service, alkategória, felelős egység, helyszín,
   nap) egy szabállyal egyben eldönthetők (`POST /api/discovery/decide-cluster`); a backtest és a
   hangolás a zajt ebben méri: hány elemzői *döntés* kell naponta, nem hány jelölt;
-- almérések (child diagnostic, `models/discovery/children.py`): az elemző tanítja meg, mit nézzen meg a gép
+- almérések (child diagnostic, `learning/children/`): az elemző tanítja meg, mit nézzen meg a gép
   egy jelölt érintett esetein. Egy almérés: egy soros állítás szűk, biztonságos nyelven (saját értelmező,
   nincs `eval`; szókincs: `szakasz_perc`, `lezarta`, `nyit_zar_egyedul`, `ertek("mező")`, `kitoltve("mező")`
   stb.; adatsorként is megadható, `rows_to_expression`. Ki adta rá: `elozo_csoport`, `elozo_szint` (pl.
@@ -414,7 +414,7 @@ a feltárási konzol ugyanazt látja. Új tényfajta: `PredicateDef` a `models/k
   táblákban ennél a mérésnél előrébb kerül; az értékből nem lesz jelölt. „zsákutca” – ennél a bontásnál a sor
   rejtve; „soha” – a mező egyik bontásban sem (és bevált szempont sem lehet). A tanult szempontok a tudástárban
   élnek (a reset nem törli; Tudás › Bontási szempontok, mérésenként);
-- általánosítási javaslatok (`models/discovery/generalize.py`, Javaslatok fül): amit az elemző ismételten
+- általánosítási javaslatok (`learning/feedback/generalize.py`, Javaslatok fül): amit az elemző ismételten
   ugyanúgy döntött el, azt a gép felajánlja általános tudásnak – ugyanaz a mezőérték több elvetési szabályban
   (→ általános szabály), ugyanaz a tulajdonság-mező sok értékkel (→ csak szűkítő szerep; entitás-mezőkre nincs
   ilyen javaslat), ugyanaz a mező több bontásnál zsákutca (→ soha), többször jó szempont (→ kiemelt), és a
@@ -425,15 +425,15 @@ a feltárási konzol ugyanazt látja. Új tényfajta: `PredicateDef` a `models/k
 - a dashboard API-ja: `GET /api/discovery`, `/api/discovery/candidates/<id>`, `/knowledge`, `/review`,
   `/config`; `POST /api/discovery/run`, `/decide`, `/fact`, `/rule`, `/availability`, `/config`.
 
-A konzol (`discovery_cli.py`) önállóan, egy idősor-fájlon dolgozik (kísérletezéshez); a tudástárat
+A konzol (`tools/discovery_cli.py`) önállóan, egy idősor-fájlon dolgozik (kísérletezéshez); a tudástárat
 ugyanúgy a `knowledge.json`-ból olvassa.
 
 ## Elemzés a jelölt oldalán (döntés előtt)
 
 A jelölt saját oldalán (Tanulás › kártya, közvetlen link: `/#candidate=<id>`; a régi `/analysis?candidate=<id>` ide
 irányít át) a „Miről szól?” és a döntés-kártya alatt az **Elemzés** szakasz (adat: `GET
-/api/discovery/candidates/<id>/analysis`, számítás: `models/discovery/analysis.py`; a felület `analysisSection` a
-`dashboard.html`-ben, összecsukható részekkel). Ugyanabból az adatlap-rétegből dolgozik, mint a feltárás, a jelölt
+/api/discovery/candidates/<id>/analysis`, számítás: `learning/analysis/candidate_analysis.py`; a felület `analysisSection` a
+`dashboard/static/dashboard.html`-ben, összecsukható részekkel). Ugyanabból az adatlap-rétegből dolgozik, mint a feltárás, a jelölt
 mérési pillanatában:
 
 - magyarázat: a mérés, a rossz-küszöb és a minta feltételei szavakban; a fő számok;
@@ -449,27 +449,27 @@ A kártyára kattintva, a kártya „Oldala →” gombjával, és az issue-pane
 
 ## Szintetikus adat és backtest
 
-- `build_synthetic.py`: valódi incidensek újramintavételezésével előtörténet a valódi idősor elé;
-  `--faults default|<fájl>` hibákat ültet be (`synthetic/faults.py`: slow_pickup, ping_pong, long_hold,
+- `simulation/synthetic/build_synthetic.py`: valódi incidensek újramintavételezésével előtörténet a valódi idősor elé;
+  `--faults default|<fájl>` hibákat ültet be (`simulation/synthetic/faults.py`: slow_pickup, ping_pong, long_hold,
   drop_feature; step vagy ramp), a ground truth a `.faults.json`-ban.
-- `backtest.py`: napról napra visszajátssza a feltárást és a diagnosztikákat, és forgatókönyvenként méri a
+- `simulation/experiments/backtest_cli.py`: napról napra visszajátssza a feltárást és a diagnosztikákat, és forgatókönyvenként méri a
   felismerés késését, a hiba előtti „természetes” jelzést és a zajt. A paraméterek hangolásának mérőpadja.
-- `learning_demo.py` (`synthetic/learning_sim.py`): tanítási szimuláció – a teljes tanuló kör napról napra,
+- `simulation/experiments/learning_demo.py` (`simulation/experiments/learning_sim.py`): tanítási szimuláció – a teljes tanuló kör napról napra,
   szimulált elemzővel (a megoldókulcs és a valódi elemző döntési stílusa szerint: finding, Bontsd tovább,
   Most nem, Erre soha, zaj-csomópont egyben, heti általánosítás), és mellette egy tanulás nélküli kör ugyanazon
   az adaton. Eredmény: `learning_demo.json` (napi döntések, sor, keret, szabályok, tippegyezés; a hibák útja).
-- A lejátszó forrása választható (`timeline_sources.py`, Szimuláció › Adatforrás): valódi idősor,
+- A lejátszó forrása választható (`simulation/timeline_selector.py`, Szimuláció › Adatforrás): valódi idősor,
   szintetikus előtörténet beültetett hibákkal (`synthetic_timeline.json`), vagy ugyanez hibák nélkül
   (`.clean.json`). A váltás resetel (a tudástár marad); a szintetikus fájlt a reset nem törli. A beültetett
-  hibák listája (megoldókulcs) a panelen lenyitható. Legyártás: `python build_synthetic.py --faults default --with-clean`.
+  hibák listája (megoldókulcs) a panelen lenyitható. Legyártás: `python -m simulation.synthetic.build_synthetic --faults default --with-clean`.
 
 ## Új diagnosztika – ellenőrzőlista
 
 1. Családválasztás: egy ticket útja (Single), ticketek csoportja (Cross), issue-k (Issue).
-2. A mérés a `models/timeline.py`-ból, `ctx.measured_at`-ig. Csoportra vonatkozó mérésnél szakaszonként.
+2. A mérés a `model/timeline/`-ból, `ctx.measured_at`-ig. Csoportra vonatkozó mérésnél szakaszonként.
 3. `threshold_definitions()` (és időablaknál `window_definitions()`): minden küszöb paraméter, leírással
    és mértékegységgel – a dashboard ebből rajzolja a paraméterezőt.
 4. `classify` csak a details-ből dönt (az újramérés és a paraméterváltozás is ezt hívja).
 5. Bizonyíték: `affected` és `history_refs` (`make_history_ref`) – az issue-ból a history sorig vissza kell tudni menni.
 6. Tudás csak `ctx.knowledge`-ből.
-7. Regisztrálás az `analyzer.py`-ban; teszt a `tests/` alatt (ld. `tests/test_core_diagnostics.py`).
+7. Regisztrálás az `engine/analyzer.py`-ban; teszt a `tests/` alatt (ld. `tests/model/diagnostics/`).

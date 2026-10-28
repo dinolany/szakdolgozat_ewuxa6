@@ -12,7 +12,7 @@ hogy egy új munkamenet is ugyanonnan folytathassa.
     „Napvégéig” léptetésnél éjfélkor, vagy kézzel).
   - A kettő közti kapocs ma csak ennyi:
     - a jóváhagyásos diagnosztikák (most: FEATURE_USAGE) jelzései a jelöltsorba mennek;
-    - bármely issue lezárható tanulsággal, amely tényt vagy szabályt hoz létre (`models/discovery/lessons.py`);
+    - bármely issue lezárható tanulsággal, amely tényt vagy szabályt hoz létre (`learning/feedback/lessons.py`);
     - az elfogadott findingot a PATTERN_FINDING diagnosztika csomagonként újraméri.
 - **Megvan a tudás minden fajtája:** tény, szabály, almérés, bontási út és szempont, munkaidő, ismert eltérés normája,
   általánosítási javaslat, felülvizsgálat.
@@ -60,7 +60,7 @@ tények, a normák, a csomópontok és az almérések ugyanúgy építhetnek, mi
 
 ## Futási modell (megállapodás, 2026-10-21)
 
-- Gyári detektorok (a `models/diagnostics` package osztályai): valós időben, minden eseménycsomaggal futnak, a feloldott
+- Gyári detektorok (a `model/diagnostics` package osztályai): valós időben, minden eseménycsomaggal futnak, a feloldott
   küszöbükkel, és issue-t nyitnak (vagy jóváhagyásos módban jelzést adnak).
 - Mintakeresés: tanuló módban marad, naponta egyszer; a jelöltjei az elemző elé kerülnek.
 - Ami a mintákból alapmérésnek való:
@@ -87,7 +87,7 @@ tények, a normák, a csomópontok és az almérések ugyanúgy építhetnek, mi
 - 2026-10-22–27 – felület: kártyarács (minden kártyán művelet, a családkártya a gyerekeivel), a jelölt saját oldala
   („Miről szól?”, döntés, bontás munkalap), csoportosító almérés, időváltozók (munkaidő, hétvége, ráadó csoport),
   elnyomás a jelölt oldaláról (minta / elem / egész mező, kemény szabály). A napi keret jelöltenként számol.
-- 2026-10-27 – a tanulási szimuláció az új menettel (`synthetic/learning_sim.py`): 237 döntés a tanulás nélküli
+- 2026-10-27 – a tanulási szimuláció az új menettel (`simulation/experiments/learning_sim.py`): 237 döntés a tanulás nélküli
   454 helyett (−48%; a régi menet csomópont-döntésekkel 169 volt), mind a 4 egycsoportos hiba ugyanazon a napon lett
   feladat, a rendszerszintű lassulásra nincs téves csoportriasztás. A tipp egyezése a végére 42%-ra romlik, mert
   csak a lezárás és a „soha” tanítja (ellenpélda alig van); próbaként a „most nem” 0,3-as súlyú ellenpéldával 72%
@@ -117,8 +117,16 @@ tények, a normák, a csomópontok és az almérések ugyanúgy építhetnek, mi
   - a fülek: Jelöltsor · Backlog-naptár · Javaslatok (kérdések, tanult küszöbök, munkaidő, általánosítás,
     felülvizsgálat, utókövetés; a figyelmet kérő elöl, számlálóval) · Tudás (fajta-szűrővel; a mérleg és a döntések is)
     · Paraméterek.
-- Következik: a dokumentáció átírása (felhasználói és fejlesztői leírás). A tanuló modul
-  igazi próbája egy több hónapos valódi ServiceNow-kivonat lesz.
+- 2026-10-27 – fejlesztői leírás: `docs/ARCHITECTURE.md` (rétegek, adatfolyam, a detektorok osztályszerkezete, a
+  tanuló modul, tárolás, API, bővítés); a tanuló modul csak olvassa az adatbázist, az issue-kat kizárólag az
+  `IssueManager` írja (`update_details`, `open_issue`). A dokumentumok notebookként is: `docs/notebooks/`.
+- 2026-10-28 – átszervezés (git: `pre-restructure` címke az előtte lévő állapoton):
+  - csomagok: `model` (domain, semmitől nem függ), `storage`, `engine`, `learning` (témánként: `state`, `mining`,
+    `analysis`, `children`, `feedback`), `dashboard`, `simulation` (leválasztható), `tools`; útvonalak:
+    `config/paths.py`; a futás adatai a `data/` alatt;
+  - egy osztály egy fájl; a körkörös importok feloldva (pl. a feature_usage felismerői külön modulban);
+  - a tesztek a csomagszerkezet szerint, közös tesztadatok a `tests/support/` alatt.
+- Következik: felhasználói leírás és a validálási fejezet (szintetikus adat, tanulási szimuláció, korlátok).
 
 ## Sorrend (megbeszélt)
 

@@ -15,6 +15,6 @@ class ProfileSet:
     def for_measure(self, measure: MeasureDef) -> Tuple[TicketProfile, ...]:
         """A mérés egységének adatlapjai (ticket vagy szakasz).
 
-        Hívja: DiscoveryService._unit_sets, analysis.analyze_candidate, analysis.breakdown,
-        pattern_finding.measure_pattern, runner._counts, runner._mine_all, runner._mine_trends."""
+        Hívja: DiscoveryService._unit_sets, candidate_analysis.analyze_candidate, candidate_analysis.breakdown,
+        pattern_finding_diagnosis.measure_pattern, runner._counts, runner._mine_all, runner._mine_trends."""
         return self.stints if measure.scope == "stint" else self.tickets

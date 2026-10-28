@@ -16,7 +16,7 @@ class KnowledgeBase:
     def __init__(self, store: Optional[Dict[str, Any]] = None, path: Optional[str] = None):
         """A közös tudástár (fájlból, vagy tesztben memóriában).
 
-        Létrehozza: analyzer, discovery_cli, synthetic.learning_sim, models.discovery.manager."""
+        Létrehozza: analyzer, discovery_cli, synthetic.learning_sim, learning.discovery_manager."""
         self.path = Path(path) if path else None
         self.store: Dict[str, Any] = store if store is not None else {}
         if self.path is not None:

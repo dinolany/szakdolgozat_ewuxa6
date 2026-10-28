@@ -71,7 +71,7 @@ class Candidate:
 
         Hívja: DiscoveryManager._covering_finding, DiscoveryManager._entries, DiscoveryManager._features,
         DiscoveryManager.contexts, DiscoveryService._refinements, DiscoveryService._run_probes,
-        DiscoveryService.knowledge_overview, backlog.candidate_groups, children.trigger_matches és mások."""
+        DiscoveryService.knowledge_overview, backlog.candidate_groups, child_def.trigger_matches és mások."""
         return [self.items] + [_parse_key(key) for key in self.alternatives]
 
     def to_dict(self) -> Dict[str, Any]:

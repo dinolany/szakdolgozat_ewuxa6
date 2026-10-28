@@ -14,11 +14,11 @@ class KnowledgeView:
     availability: Mapping[Tuple[str, str], bool] = field(default_factory=dict)   # (funkció, csoport) -> elérhető
     # keresési szempontként használt almérések: (dimenzió neve, kifejezés); az adatlapokon igen/nem értékkel
     derived: Tuple[Tuple[str, str], ...] = ()
-    # csoport -> munkaidő (models.working_time.Schedule): a felvételi és a hold idő munkaórában
+    # csoport -> munkaidő (model.working_time.Schedule): a felvételi és a hold idő munkaórában
     schedules: Mapping[str, Any] = field(default_factory=dict)
-    # a gyári detektorok szűkebb hatókörű küszöbei (models.diagnostics.core.threshold_overrides.ThresholdOverride)
+    # a gyári detektorok szűkebb hatókörű küszöbei (model.diagnostics.core.threshold_override.ThresholdOverride)
     threshold_overrides: Tuple[Any, ...] = ()
-    # a tanuló kör erre a detektorra szóló elvető szabályai (models.diagnostics.core.suppression)
+    # a tanuló kör erre a detektorra szóló elvető szabályai (model.diagnostics.core.suppression)
     suppressions: Tuple[Mapping[str, Any], ...] = ()
 
     @classmethod

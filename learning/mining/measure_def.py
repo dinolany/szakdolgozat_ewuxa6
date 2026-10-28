@@ -29,8 +29,8 @@ class MeasureDef:
     def is_bad(self, value: Optional[float], threshold: Optional[float] = None) -> bool:
         """Az érték érintett (kiugró) eset-e a küszöb szerint.
 
-        Hívja: DiscoveryService._unit_sets, MeasureDef.explain, analysis.analyze_candidate, analysis.breakdown,
-        baseline.pattern_counts, compare.window_summary, mining.mine, pattern_finding.measure_pattern, trend._counts."""
+        Hívja: DiscoveryService._unit_sets, MeasureDef.explain, candidate_analysis.analyze_candidate, candidate_analysis.breakdown,
+        baseline.pattern_counts, compare.window_summary, contrast_mining.mine, pattern_finding_diagnosis.measure_pattern, trend._counts."""
         if value is None:
             return False
         return value >= (self.bad_threshold if threshold is None else threshold)
@@ -48,7 +48,7 @@ class MeasureDef:
     def explain(self, value: Optional[float], threshold: float, pending: bool = False) -> str:
         """Miért érintett (vagy miért nem) egy eset: a mért érték szavakban, a küszöbbel.
 
-        Hívja: analysis.analyze_candidate."""
+        Hívja: candidate_analysis.analyze_candidate."""
         text = (self.pending_reason if pending and self.pending_reason else self.reason).format(value=self.format_value(value))
         limit = f"{threshold:g} {self.unit}".replace(".", ",").strip()
         if self.kind == "flag":

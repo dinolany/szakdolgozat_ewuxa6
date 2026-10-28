@@ -55,7 +55,7 @@ class DiscoveryManager:
         """A feltárási állapot (jelöltek, döntések, szabályok, meta) és a közös tudástár; a régi, megszűnt figyelés
         alatti jelölteket újra döntésre teszi.
 
-        Létrehozza: discovery_cli, synthetic.learning_sim, models.discovery.service."""
+        Létrehozza: discovery_cli, synthetic.learning_sim, learning.discovery_service."""
         self.state = state if state is not None else {}
         for key, default in (("candidates", {}), ("decisions", []), ("rules", {}), ("meta", {})):
             self.state.setdefault(key, default)

@@ -65,7 +65,7 @@ class ChildDef:
     def stats_since_review(self) -> Dict[str, int]:
         """A futási és egyezési statisztika az utolsó megerősítés óta (a felülvizsgálathoz).
 
-        Hívja: children.review_children."""
+        Hívja: child_review.review_children."""
         return {k: self.stats.get(k, 0) - self.reviewed_stats.get(k, 0) for k in ("runs", "triggered", "decided", "agreed")}
 
     @classmethod
@@ -92,7 +92,7 @@ def _same_trigger(a: Mapping[str, Any], b: Mapping[str, Any]) -> bool:
 def trigger_label(trigger: Mapping[str, Any]) -> str:
     """Egy kiváltó szavakban (pl. „jelzéseknél, ahol feature=work_notes”).
 
-    Hívja: ChildDef.triggers_label, children.trigger_options."""
+    Hívja: ChildDef.triggers_label, child_def.trigger_options."""
     parts = []
     if trigger.get("candidate_id"):
         parts.append(f"csak a(z) {trigger['candidate_id']} jelöltnél")

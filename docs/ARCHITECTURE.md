@@ -17,81 +17,127 @@ időben feladattá (issue) alakítja, az ismeretlen összefüggéseket **mintake
 elé teszi, és az elemző döntéseiből (feladat, most nem, bontás, elnyomás, lezárási tanulság) **tanul**: a tanult
 tudás visszahat a mintakeresésre és a detektorokra is.
 
-## 2. Rétegek
+## 2. Csomagok és rétegek
+
+### 2.1 Könyvtárszerkezet
+
+Minden logikai modul külön csomag; egy fájlban egy osztály van (a kis, egy osztályhoz tartozó segédfüggvények és
+konstansok vele együtt). A tiszta számoló modulok (pl. a mintakeresés) függvénymodulok, témánként almappában.
+
+```
+main.py                     indítás: a komponensek példányosítása és összekötése
+config/                     paths.py (minden útvonal egy helyen), discovery.json (a tanuló modul paraméterei)
+model/                      a domain – semmitől nem függ
+  incident.py, history_line.py, issue.py, issue_state.py, severity_level.py
+  timeline/                 a jegy útja egy pillanatig: ticket_timeline.py, stint.py, interval.py, field_change.py,
+                            fields.py (mezőnevek, állapotok), timeline_builder.py (felépítés a history-ból)
+  working_time/             munkarend: schedule.py, schedule_suggestion.py, schedule_inference.py
+  knowledge/                a tudás modellje: fact.py, knowledge_view.py, group_schedules.py, predicates.py, …
+  diagnostics/              a gyári detektorok
+    core/                   a keretrendszer: base_diagnosis.py, a három család, measurement*.py, window_type.py, …
+    detectors/              a konkrét detektorok (feature_usage/ saját almappában)
+    diagnostic_registry.py  nyilvántartás és futtatás
+storage/                    tárolók és betöltők: incident_repository.py, knowledge_base.py, threshold_store.py,
+                            excel_loader.py, backup.py, json_cleaning.py, errors.py
+engine/                     a valós idejű feldolgozás: event_processor.py, analyzer.py, issue_manager.py
+learning/                   a tanuló modul
+  discovery_service.py, discovery_manager.py, runner.py, discovery_config.py, promotion.py,
+  pattern_finding_diagnosis.py (az elfogadott minták detektora)
+  state/                    jelölt, döntés, szabály és állapotaik
+  mining/                   adatlapok, mérések, kontrasztminta-keresés, romlás, saját norma, családok
+  analysis/                 a jelölt elemzése, backlog-naptár
+  children/                 almérések: kifejezésnyelv, változók, futtatás, próbák
+  feedback/                 tanulságok, utókövetés, általánosítás, felülvizsgálat, tanult küszöbök
+dashboard/                  server.py, request_handler.py, dashboard_service.py, launcher.py, static/dashboard.html
+simulation/                 leválasztható: lejátszás és kísérletek
+  time_transformer.py, timeline_selector.py, playback_queue.py, simulation_scheduler.py
+  synthetic/                szintetikus adat: generator.py, faults.py, compare.py, build_synthetic.py
+  experiments/              backtest, hangolás, tanulási szimuláció
+tools/                      discovery_cli.py (konzol), scripts/
+data/                       a futás adatai (nincs a repóban): ld. data/README.md
+tests/                      a csomagszerkezetet tükrözi; közös tesztadatok: tests/support/
+docs/                       ez a leírás, DIAGNOSTICS.md, ROADMAP.md, notebooks/
+```
+
+### 2.2 Rétegek és függések
 
 ```mermaid
 flowchart TB
-  subgraph Bemenet["Bemenet és lejátszás"]
-    XL[loader.py<br/>Excel history] --> TT[time_transformer.py<br/>idősor-gyorsítótár]
-    SYN[build_synthetic.py<br/>synthetic/*] --> TS[timeline_sources.py<br/>forrásválasztó]
-    TT --> TS
-    TS --> SCH[simulation_scheduler.py<br/>+ playback_queue.py]
+  subgraph Sim["simulation (leválasztható)"]
+    TS[timeline_selector<br/>time_transformer] --> SCH[simulation_scheduler<br/>playback_queue]
+    SYN[synthetic/] --> TS
   end
-  SCH -->|eseménycsomag| EP[event_processor.py]
-  subgraph Mag["Mérés és feladatkezelés (valós idő)"]
-    EP --> AN[analyzer.py]
-    AN --> REG[models/diagnostics/registry.py]
-    REG --> DET[models/diagnostics/*<br/>gyári detektorok]
-    REG --> IM[issue_manager.py]
+  subgraph Eng["engine (valós idő)"]
+    EP[event_processor] --> AN[analyzer]
+    AN --> IM[issue_manager]
   end
-  subgraph Tanulo["Tanuló modul (naponta + az elemző döntésekor)"]
-    SVC[models/discovery/service.py] --> MAN[models/discovery/manager.py]
-    SVC --> PURE[mining, profile, analysis,<br/>children, lessons, ...]
+  subgraph Learn["learning (naponta + az elemző döntésekor)"]
+    SVC[discovery_service] --> MAN[discovery_manager]
+    SVC --> PURE[mining, analysis, children,<br/>feedback, state]
   end
+  subgraph Model["model (domain)"]
+    DOM[incident, history_line, issue,<br/>timeline, working_time, knowledge]
+    DIAG[diagnostics: core + detectors]
+  end
+  subgraph Store["storage"]
+    REPO[(incident_repository<br/>data/database.json)]
+    KB[(knowledge_base<br/>data/knowledge.json)]
+    TH[(threshold_store<br/>data/thresholds.json)]
+  end
+  DS[(data/discovery_state.json)]
+  subgraph UI["dashboard"]
+    SRV[server + request_handler<br/>+ dashboard_service] --> HTML[static/dashboard.html]
+  end
+  SCH -->|eseménycsomag| EP
   EP -->|virtuális naponta| SVC
-  KB[(models/knowledge_base.py<br/>knowledge.json)]
-  DS[(discovery_state.json<br/>jelöltek, döntések, szabályok)]
-  AN -. KnowledgeView .-> KB
-  SVC --> KB
-  MAN --> KB
-  SVC -->|állapot mentése| DS
-  REPO[(repository.py<br/>database.json)]
+  AN --> DIAG
+  AN --> KB
+  AN --> TH
   EP --> REPO
   IM --> REPO
   SVC -->|issue nyitása, lezárása, újranyitása,<br/>tanuló adatok az issue-n| IM
   REPO -.->|csak olvas: incidensek, issue-k| SVC
-  subgraph Felulet["Felület"]
-    SRV[dashboard_server.py<br/>HTTP API] --> UI[dashboard.html]
-  end
+  SVC --> KB
+  SVC -->|állapot| DS
   SRV --> SVC
   SRV --> AN
   SRV --> SCH
 ```
 
-| Réteg | Fő modulok | Felelősség |
+| Csomag | Felelősség | Függ |
 |---|---|---|
-| Bemenet és lejátszás | `loader.py`, `time_transformer.py`, `timeline_sources.py`, `simulation_scheduler.py`, `playback_queue.py`, `synthetic/` | A history-sorok előállítása (Excelből vagy szintetikusan) és időrendi lejátszása csomagokban, virtuális idővel. |
-| Eseményfeldolgozás | `event_processor.py`, `models/history.py`, `models/incident.py` | Egy csomag sorait incidensekre alkalmazza, egy tranzakcióban elemeztet és ment. |
-| Tárolás | `repository.py`, `models/knowledge_base.py`, `models/backup.py` | Az incidens-adatbázis (`database.json`), a tudástár (`knowledge.json`), a tanulási állapot (`discovery_state.json`) és a mentések. |
-| Időértelmezés | `models/timeline.py`, `models/working_time.py` | A jegy útja egy pillanatig nézve: szakaszok (csoportonként), hold, felvétel, munkaidő. |
-| Mérés és feladatkezelés | `analyzer.py`, `models/diagnostics/`, `issue_manager.py`, `models/issue.py` | Gyári detektorok futtatása, mérések, az issue-k életciklusa. |
-| Tanuló modul | `models/discovery/` | Mintakeresés, jelöltek, döntések, szabályok, almérések, bontás, tanulságok, javaslatok. |
-| Felület | `dashboard_server.py`, `dashboard.html` | HTTP API és egyoldalas felület (issue-k, incidensek, küszöbök, tanulás). |
-| Eszközök | `learning_demo.py`, `backtest.py`, `tune.py`, `discovery_cli.py`, `synthetic/` | Tanulási szimuláció, backtest, paraméterhangolás, konzol. |
+| `model` | A domain: incidens, history-sor, issue, a jegy idővonala, munkarend, a tudás modellje (`KnowledgeView`), a gyári detektorok és keretrendszerük. | semmitől |
+| `storage` | Fájlba írás és olvasás: incidens-adatbázis, tudástár, küszöbök, Excel-betöltő, mentések. | `model` |
+| `engine` | Egy eseménycsomag feldolgozása: incidensek frissítése, a detektorok futtatása, az issue-k életciklusa. | `model`, `storage`, és a `learning`-ből egyetlen osztály: a `PatternFindingDiagnosis` regisztrálásához |
+| `learning` | Mintakeresés, jelöltek, döntések, szabályok, almérések, bontás, tanulságok, javaslatok. | `model`, `storage`; az elemzőt és az `IssueManager`-t példányként kapja (`main.py`), nem importálja |
+| `dashboard` | HTTP API és egyoldalas felület. | a fentiek |
+| `simulation` | Lejátszás (valódi vagy szintetikus idősor, virtuális idővel), szintetikus adat, kísérletek. A maghoz csak visszahívásokkal kapcsolódik; nélküle a mag és a felület is fut. | a fentiek |
+| `tools` | Konzolos eszközök. | a fentiek |
 
 Indítás: `main.py` példányosítja és köti össze a komponenseket (repository, elemző, tanuló szolgáltatás,
 eseményfeldolgozó, ütemező, webszerver). Az összekötés egyirányú: a felsőbb réteg kapja meg az alsóbbat, nem fordítva.
 Az egyetlen visszacsatolás a tudás: a tanuló modul írja, az elemző olvassa (`KnowledgeView`), és az elemző a tanult
-szabályokat egy visszahívón át kéri (`IncidentAnalyzer.rule_provider`).
+szabályokat egy visszahívón át kéri (`IncidentAnalyzer.rule_provider`). Az útvonalak egy helyen vannak:
+`config/paths.py` (`PROJECT_ROOT`, `CONFIG_DIR`, `DATA_DIR`, `DASHBOARD_HTML`).
 
 ## 3. Alapfogalmak és adatmodell
 
 | Fogalom | Hol | Jelentés |
 |---|---|---|
-| History-sor | `models/history.py` (`HistoryLine`) | Egy mezőváltozás egy incidensen: ki, mikor, mit, miről mire. |
-| Incidens | `models/incident.py` | A history-sorok és a belőlük levezetett mezők. A mérés nem a mostani mezőkből, hanem a history-ból dolgozik. |
-| Idővonal, szakasz | `models/timeline.py` (`TicketTimeline`, `Stint`) | A jegy útja egy adott pillanatig (`as_of`); a szakasz az az időszak, amíg a jegy egy csoportnál volt. |
-| Mérés (mintakereséshez) | `models/discovery/measures.py` | Egy egységre (jegy vagy szakasz) mért érték és a küszöb, amitől „érintett”: lassú felvétel, hosszú hold, ping-pong, SLA-eszkaláció, csoportonkénti felvétel és hold. |
-| Adatlap (profile) | `models/discovery/profile.py` | Egy egység mezői (dimenziók) és mért értékei egy pillanatban; a mintakeresés és az elemzés ugyanebből dolgozik. |
-| Minta, jelölt | `mining.py`, `knowledge.py` (`Candidate`) | Mezőérték-kombináció, ahol az érintettek aránya szignifikánsan magasabb; jelöltként az elemző elé kerül. |
+| History-sor | `model/history_line.py` (`HistoryLine`) | Egy mezőváltozás egy incidensen: ki, mikor, mit, miről mire. |
+| Incidens | `model/incident.py` | A history-sorok és a belőlük levezetett mezők. A mérés nem a mostani mezőkből, hanem a history-ból dolgozik. |
+| Idővonal, szakasz | `model/timeline/` (`TicketTimeline`, `Stint`) | A jegy útja egy adott pillanatig (`as_of`); a szakasz az az időszak, amíg a jegy egy csoportnál volt. |
+| Mérés (mintakereséshez) | `learning/mining/measures.py` | Egy egységre (jegy vagy szakasz) mért érték és a küszöb, amitől „érintett”: lassú felvétel, hosszú hold, ping-pong, SLA-eszkaláció, csoportonkénti felvétel és hold. |
+| Adatlap (profile) | `learning/mining/profiles.py` (`TicketProfile`, `ProfileSet`) | Egy egység mezői (dimenziók) és mért értékei egy pillanatban; a mintakeresés és az elemzés ugyanebből dolgozik. |
+| Minta, jelölt | `learning/mining/contrast_mining.py`, `learning/state/candidate.py` | Mezőérték-kombináció, ahol az érintettek aránya szignifikánsan magasabb; jelöltként az elemző elé kerül. |
 | Jelzés | `kind="signal"` jelölt | Jóváhagyásos módban futó detektor túllépése, ugyanúgy jelöltként. |
-| Issue (feladat) | `models/issue.py` | Egy detektor egy túllépése; állapotai: active, not_relevant, outdated, resolved, suppressed, declined, archived, deleted. |
-| Döntés | `knowledge.py` (`Decision`) | Az elemző (vagy egy almérés) döntése egy jelöltről. |
-| Szabály | `knowledge.py` (`Rule`) | Datalog-szerű elvető vagy kiemelő szabály mintaelemekre (`*` = a mező bármely értéke), mérésekre szűkíthető; a kemény szabály az erős jelöltet is rejti. |
-| Tény | `knowledge_base.py` (`Fact`) | A világról szóló állítás (szint, munkaidő, nem dolgozik, elérhetőség, nem elvárt funkció). |
-| Almérés | `children.py` (`ChildDef`) | Az elemző által tanított részmérés egy biztonságos kifejezésnyelven (ellenőrzés vagy csoportosítás). |
-| Szűkebb küszöb | `core/threshold_overrides.py` | Egy detektor küszöbe egy hatókörre (csoport, útvonal, service): kézi vagy tanult. |
-| Tanulság | `lessons.py` | Az issue lezárásakor adott magyarázat, amelyből tudás lesz. |
+| Issue (feladat) | `model/issue.py`, `model/issue_state.py` | Egy detektor egy túllépése; állapotai: active, not_relevant, outdated, resolved, suppressed, declined, archived, deleted. |
+| Döntés | `learning/state/decision.py` | Az elemző (vagy egy almérés) döntése egy jelöltről. |
+| Szabály | `learning/state/rule.py` | Datalog-szerű elvető vagy kiemelő szabály mintaelemekre (`*` = a mező bármely értéke), mérésekre szűkíthető; a kemény szabály az erős jelöltet is rejti. |
+| Tény | `model/knowledge/fact.py` | A világról szóló állítás (szint, munkaidő, nem dolgozik, elérhetőség, nem elvárt funkció). |
+| Almérés | `learning/children/child_def.py` (`ChildDef`) | Az elemző által tanított részmérés egy biztonságos kifejezésnyelven (ellenőrzés vagy csoportosítás). |
+| Szűkebb küszöb | `model/diagnostics/core/threshold_override.py` | Egy detektor küszöbe egy hatókörre (csoport, útvonal, service): kézi vagy tanult. |
+| Tanulság | `learning/feedback/lessons.py` | Az issue lezárásakor adott magyarázat, amelyből tudás lesz. |
 
 ## 4. A valós idejű kör: eseménycsomagtól a feladatig
 
@@ -119,10 +165,10 @@ sequenceDiagram
 - **Eseményfeldolgozás** (`IncidentEventProcessor.process_events`): a sorokból `HistoryLine`, incidensenkénti
   csoportosítás, `Incident.apply_event` (a duplikátumot az incidens maga szűri), majd egy tranzakcióban elemzés és
   mentés. Ha az elemzés hibára fut, az issue-k visszaállnak a csomag előtti állapotra.
-- **Elemző** (`IncidentAnalyzer`): a detektorok nyilvántartása, a küszöbök (`config/thresholds.py`, `database.json.thresholds.json`),
+- **Elemző** (`IncidentAnalyzer`): a detektorok nyilvántartása, a küszöbök (`storage/threshold_store.py`, `data/thresholds.json`),
   a be/ki kapcsolás és a jóváhagyásos mód; minden futáshoz friss `KnowledgeView`-t ad.
-- **Detektorok** (`models/diagnostics`): a közös keretrendszert a 6. fejezet írja le.
-- **IssueManager** (`issue_manager.py`): egy futás eredményének átvezetése a detektor saját issue-ira. Túllépés: új
+- **Detektorok** (`model/diagnostics`): a közös keretrendszert a 6. fejezet írja le.
+- **IssueManager** (`engine/issue_manager.py`): egy futás eredményének átvezetése a detektor saját issue-ira. Túllépés: új
   issue vagy újra aktív; küszöb alatt: not_relevant; időablakos mérésnél, ha kiesett: outdated. Az elemző döntésével
   beállított állapotokat (resolved, suppressed…) a mérés nem írja felül; kivétel az **ismert hiba**: a „valódi hiba”
   tanulsággal lezárt issue elcsendesedés után újra túllépve ugyanabban a csomagban újranyílik.
@@ -192,7 +238,7 @@ A tanulás három szintje:
 - **Tudás** (szabályt, tényt, almérést, küszöböt hoz létre): az elnyomás, a lezárási tanulság, a módszer- és
   szempont-visszajelzés, az elfogadott javaslat (tanult küszöb, munkaidő, általánosítás).
 
-## 6. A gyári detektorok keretrendszere (`models/diagnostics/core`)
+## 6. A gyári detektorok keretrendszere (`model/diagnostics/core`)
 
 ### 6.1 Az osztályszerkezet: absztrakt alap, három család, konkrét detektorok
 
@@ -250,7 +296,7 @@ classDiagram
 
 Jelölés: a `*` **absztrakt metódus** (`@abstractmethod`): az alosztálynak kötelező megvalósítania, különben a Python nem engedi példányosítani (`TypeError`). A csillag nélküli metódusnak van alapértelmezett működése, felülírni nem kötelező. Az alsó dobozok a konkrét detektorok, a `…Diagnosis` utótag nélkül.
 
-#### `BaseDiagnosis(ABC)` – a mérés váza (`models/diagnostics/core/base.py`)
+#### `BaseDiagnosis(ABC)` – a mérés váza (`model/diagnostics/core/base_diagnosis.py`)
 
 Közös osztályattribútumok: `key` (a detektor azonosítója), `config_key` (a küszöbkonfiguráció kulcsa),
 `issue_category`, `family`, `window_type`, `phase`, `triggers` (milyen eseményre fut), `review_by_default`
@@ -278,7 +324,7 @@ Közös osztályattribútumok: `key` (a detektor azonosítója), `config_key` (a
 | | `child_units(ctx)` | Almérésekhez: jelzésenként az érintett és az összehasonlító esetek; alapból nincs. |
 | **Ellenőrzés** | `__init_subclass__` | Osztálydefiníciókor: egyedi `key`, alapértelmezett `config_key`, az ablaktípushoz kötelező ablakparaméter. |
 
-#### A családok (`models/diagnostics/core/base.py`, a `BaseDiagnosis` alatt)
+#### A családok (`model/diagnostics/core/single_ticket_diagnosis.py`, `cross_ticket_diagnosis.py`, `cross_issue_diagnosis.py`)
 
 | Osztály | Beállítás | Metódus | Feladat |
 |---|---|---|---|
@@ -291,7 +337,7 @@ Közös osztályattribútumok: `key` (a detektor azonosítója), `config_key` (a
 | | | `is_eligible`, `is_activity`, `activity_events`, `incidents_in_window` | Jegykiválasztás: az ablakban releváns aktivitású, belépési feltételnek megfelelő jegyek. |
 | `CrossIssueDiagnosis` | `family=CROSS_ISSUE`, ablak: SNAPSHOT, 2. fázis | `observe_issues(issues, window, ctx)`* | A többi detektor issue-inak mérése (a sajátjait nem látja). |
 
-#### A konkrét detektorok (`models/diagnostics/<detektor>.py`, pl. `ping_pong.py`)
+#### A konkrét detektorok (`model/diagnostics/detectors/<detektor>.py`, pl. `ping_pong.py`)
 
 | Detektor | Család, ablak | Mit mér | Saját metódusok a kötelezőkön túl |
 |---|---|---|---|
@@ -313,13 +359,13 @@ alapbeállítás (`family`, alapablak) és a közös besorolás számít.
 
 ### 6.2 A futtatás
 
-- **Ablakok** (`core/window.py`): NONE (a jegy teljes élete), SNAPSHOT (állapotkép), SLIDING (csúszó), TUMBLING
+- **Ablakok** (`core/window_type.py`, `core/measurement_window.py`): NONE (a jegy teljes élete), SNAPSHOT (állapotkép), SLIDING (csúszó), TUMBLING
   (igazított vödrök).
-- **Fázisok** (`registry.py`): az 1. fázisban a jegyeken dolgozó detektorok futnak, a 2.-ban a `CrossIssueDiagnosis`
+- **Fázisok** (`diagnostic_registry.py`): az 1. fázisban a jegyeken dolgozó detektorok futnak, a 2.-ban a `CrossIssueDiagnosis`
   családba tartozók. Minden futás eredménye azonnal az issue-kra kerül, így a 2. fázis már a frissített issue-kat látja.
   A regisztrálás (`DiagnosticRegistry.register`) csak `BaseDiagnosis` példányt fogad el, ütköző `key` vagy
   `config_key` nélkül.
-- **Küszöb-feloldás** (`thresholds_for` → `threshold_overrides.resolve`): paraméterenként a kézi szűkebb küszöb az
+- **Küszöb-feloldás** (`thresholds_for` → `threshold_override.resolve`): paraméterenként a kézi szűkebb küszöb az
   első, utána a tanult szűkebb, végül a globális. A mért eset entitásai (`entity_items`: csoportok, útvonal, service,
   alkategória…) döntik el, melyik szűkebb küszöb illik rá.
 - **Jóváhagyásos mód** (`ctx.review`): a detektor nem nyit új issue-t, a túllépései jelzésként a jelöltsorba mennek
@@ -328,59 +374,56 @@ alapbeállítás (`family`, alapablak) és a közös besorolás számít.
   szabály a tanuló körből, nem nyílik új issue (`run`). Az illesztés ugyanaz (`conditions_match`), mint a jelöltek
   szabályillesztésénél.
 
-## 7. A tanuló modul belső szerkezete (`models/discovery`)
+## 7. A tanuló modul belső szerkezete (`learning/`)
 
 A modul három szerepre bomlik: egy **szolgáltatás** (koordinál, I/O, felület), egy **állapotkezelő** (a tanulási
-állapot és a szabályok), és **tiszta függvények** (számolnak, nem írnak).
+állapot és a szabályok), és **tiszta függvények** (számolnak, nem írnak), témánként almappában.
 
 ```mermaid
 flowchart TB
-  SVC[service.py<br/>DiscoveryService<br/>koordinálás, I/O, API, hatás-szövegek] --> MAN[manager.py<br/>DiscoveryManager<br/>jelöltek, döntések, szabályok,<br/>tipp, sorrend, almérések, bontás]
+  SVC[discovery_service.py<br/>DiscoveryService<br/>koordinálás, I/O, API, hatás-szövegek] --> MAN[discovery_manager.py<br/>DiscoveryManager<br/>jelöltek, döntések, szabályok,<br/>tipp, sorrend, almérések, bontás]
   SVC --> RUN[runner.py<br/>napi feltárás]
-  RUN --> PRO[profile.py<br/>adatlapok]
-  RUN --> MIN[mining.py<br/>kontrasztminták]
-  RUN --> TR[trend.py<br/>romlás]
-  SVC --> ANA[analysis.py<br/>elemzés, bontás, brief]
-  SVC --> CH[children.py<br/>kifejezésnyelv, almérés, próbák]
-  SVC --> LES[lessons.py] & FU[follow_up.py] & GEN[generalize.py] & REV[review.py]
-  SVC --> LT[learned_thresholds.py] & BL[backlog.py] & PROM[promotion.py]
-  MAN --> KN[knowledge.py<br/>Candidate, Decision, Rule,<br/>match_rule]
-  MAN --> CL[clusters.py] & BAS[baseline.py]
-  MAN --> KB[(knowledge_base.py)]
-  SVC --> CFG[config.py] & MEA[measures.py]
+  RUN --> MIN[mining/<br/>adatlapok, kontrasztminták,<br/>romlás, saját norma]
+  SVC --> ANA[analysis/<br/>elemzés, bontás, backlog]
+  SVC --> CH[children/<br/>kifejezésnyelv, almérés, próbák]
+  SVC --> FB[feedback/<br/>tanulság, utókövetés, általánosítás,<br/>felülvizsgálat, tanult küszöb]
+  SVC --> PROM[promotion.py<br/>+ pattern_finding_diagnosis.py]
+  MAN --> ST[state/<br/>Candidate, Decision, Rule]
+  MAN --> MIN
+  MAN --> KB[(storage/knowledge_base.py)]
+  SVC --> CFG[discovery_config.py]
 ```
 
-| Modul | Szerep |
+| Hely | Szerep |
 |---|---|
-| `service.py` | A tanuló kör szolgáltatása: a napi kör, a felület végpontjai (döntés, elnyomás, almérés, bontás, tanulság, javaslatok, mentés), a hatásablak szövegei, a tudás mentése. Az egyetlen hely, amely az adatbázishoz és a fájlokhoz nyúl. |
-| `manager.py` | A tanulási állapot (`{candidates, decisions, rules, meta}`) kezelése: jelöltek fogadása, szabályok alkalmazása, tipp (súlyozott legközelebbi szomszéd), prioritás, döntések, almérések tárolása, bontási tudás, csatolás. Nem tud fájlról és adatbázisról. |
-| `knowledge.py` | Az adatmodell (jelölt, döntés, szabály) és a szabályillesztés (`match_rule`). |
-| `profile.py` | Ticket- és szakasz-adatlapok egy pillanatra, munkaidővel és keresési szempontként használt almérésekkel. |
-| `mining.py` | Kontrasztminta-keresés (subgroup discovery): legfeljebb 2 elemű kombinációk, egyoldali binomiális próba, Benjamini–Hochberg FDR, külön családban a kontextusok (tovább bontott minták belseje) és a kiemelt mezők; a lefedett általánosabb minták kiesnek; a tiltott bontási utak nem jönnek. |
-| `trend.py` | Romlás a saját múlthoz képest, a populáció változásával korrigálva. |
-| `analysis.py` | Egy jelölt elemzése (összegzés, „mi köti össze”, napi arány, eloszlás, esetek), a kártya-összefoglaló, a „Mi jellemző még?” bontás. |
-| `children.py` | Az almérés-nyelv (saját AST-értelmező, `eval` nélkül), a változók és függvények szókincse (idő, munkaidő, ráadó csoport…), az almérés futtatása (ellenőrzés vagy csoportosítás), a gyári próbák. |
-| `lessons.py` | A lezárási tanulságok katalógusa és az űrlap alapértékei. |
-| `follow_up.py` | Utókövetés indítása és értékelése. |
-| `generalize.py` | Általánosítási javaslatok az ismétlődő döntésekből. |
-| `review.py` | A szabályok és tények felülvizsgálata (régóta nem talált, ellentmond az adat). |
-| `learned_thresholds.py` | Tanult küszöb-javaslatok a gyári detektorokhoz. |
-| `baseline.py` | Ismert eltérés: a minta saját normája. |
-| `clusters.py` | Közös részminták (családok) és hatókör. |
-| `backlog.py` | A backlog-naptár adatai. |
-| `promotion.py` | Az elfogadott mintából PATTERN_FINDING issue. |
-| `runner.py`, `config.py`, `measures.py` | A napi feltárás összerakása, a paraméterek, a mérési katalógus. |
+| `discovery_service.py` | A tanuló kör szolgáltatása: a napi kör, a felület végpontjai (döntés, elnyomás, almérés, bontás, tanulság, javaslatok, mentés), a hatásablak szövegei, a tudás mentése. A modulból egyedül ez nyúl fájlhoz és (olvasásra) az adatbázishoz; az issue-kat az `IssueManager`-en át írja. |
+| `discovery_manager.py` (+ `ingest_report.py`) | A tanulási állapot (`{candidates, decisions, rules, meta}`) kezelése: jelöltek fogadása, szabályok alkalmazása, tipp (súlyozott legközelebbi szomszéd), prioritás, döntések, almérések tárolása, bontási tudás, csatolás. Nem tud fájlról és adatbázisról. |
+| `runner.py`, `discovery_config.py` | A napi feltárás összerakása; a paraméterek (`config/discovery.json`). |
+| `promotion.py`, `pattern_finding_diagnosis.py` | Az elfogadott mintából PATTERN_FINDING issue, és a detektor, amely az elfogadott mintákat folyamatosan újraméri. |
+| `state/` | Az adatmodell: `Candidate`, `Decision`, `Rule` (+ `match_rule`, a szabályillesztés), és az állapotok, ítéletek, hatókörök felsorolásai. |
+| `mining/profiles.py`, `ticket_profile.py`, `profile_set.py` | Ticket- és szakasz-adatlapok egy pillanatra, munkaidővel és keresési szempontként használt almérésekkel. |
+| `mining/measures.py`, `measure_def.py` | A mérési katalógus. |
+| `mining/contrast_mining.py` (+ `pattern.py`, `pattern_result.py`, `mining_params.py`) | Kontrasztminta-keresés (subgroup discovery): legfeljebb 2 elemű kombinációk, egyoldali binomiális próba, Benjamini–Hochberg FDR, külön családban a kontextusok (tovább bontott minták belseje) és a kiemelt mezők; a lefedett általánosabb minták kiesnek; a tiltott bontási utak nem jönnek. |
+| `mining/trend.py` (+ `trend_params.py`) | Romlás a saját múlthoz képest, a populáció változásával korrigálva. |
+| `mining/baseline.py`, `mining/clusters.py` | Ismert eltérés: a minta saját normája; közös részminták (családok) és hatókör. |
+| `analysis/candidate_analysis.py` | Egy jelölt elemzése (összegzés, „mi köti össze”, napi arány, eloszlás, esetek), a kártya-összefoglaló, a „Mi jellemző még?” bontás. |
+| `analysis/backlog.py` | A backlog-naptár adatai. |
+| `children/expression_language.py` | Az almérés-nyelv: saját AST-értelmező (`eval` nélkül), a függvények, a táblázatos szerkesztő sorai. |
+| `children/variables.py`, `unit_context.py` | A változók szókincse (idő, munkaidő, ráadó csoport…) és a mért egység (jegy vagy szakasz) környezete. |
+| `children/child_def.py`, `child_runner.py`, `child_review.py`, `probes.py` | Az almérés definíciója és indítói, futtatása (ellenőrzés vagy csoportosítás), felülvizsgálata, és a gép saját próbálkozásai. |
+| `feedback/lessons.py`, `follow_up.py` | A lezárási tanulságok katalógusa; az utókövetés indítása és értékelése. |
+| `feedback/generalize.py`, `review.py`, `learned_thresholds.py` | Általánosítási javaslatok; a szabályok és tények felülvizsgálata; tanult küszöb-javaslatok a gyári detektorokhoz. |
 
 ## 8. A tudás és a tárolás
 
 | Fájl | Tartalom | Reset után |
 |---|---|---|
-| `database.json` | Incidensek (history-val), issue-k, issue-előzmény. | törlődik |
-| `database.json.thresholds.json` | A detektorok globális küszöbei, ablakai, be/ki, jóváhagyásos mód. | megmarad |
-| `knowledge.json` | Tények, almérések, szűkebb küszöbök, bontási tudás, tanulságok, utókövetések, elutasított javaslatok. | megmarad |
-| `discovery_state.json` | Jelöltek, döntések, szabályok, számlálók. | a jelöltek és a döntések törlődnek, a **szabályok megmaradnak** |
+| `data/database.json` | Incidensek (history-val), issue-k, issue-előzmény. | törlődik |
+| `data/thresholds.json` | A detektorok globális küszöbei, ablakai, be/ki, jóváhagyásos mód. | megmarad |
+| `data/knowledge.json` | Tények, almérések, szűkebb küszöbök, bontási tudás, tanulságok, utókövetések, elutasított javaslatok. | megmarad |
+| `data/discovery_state.json` | Jelöltek, döntések, szabályok, számlálók. | a jelöltek és a döntések törlődnek, a **szabályok megmaradnak** |
 | `config/discovery.json` | A tanuló modul paraméterei. | megmarad |
-| `backups/` | A `knowledge.json` és a `discovery_state.json` datált másolatai (az utolsó 30, és napi 60 napig). | megmarad |
+| `data/backups/` | A `knowledge.json` és a `discovery_state.json` datált másolatai (az utolsó 30, és napi 60 napig). | megmarad |
 
 - A **`KnowledgeView`** (`KnowledgeBase.view`) a mérés pillanatában érvényes, csak olvasható tudás a detektoroknak
   és a mintakeresésnek: csoportszintek (L1), funkció-elérhetőség, keresési szempontként használt almérések,
@@ -406,7 +449,7 @@ flowchart TB
 
 ## 9. Felület és API
 
-A `dashboard_server.py` egy szabványkönyvtári HTTP-szerver (`ThreadingHTTPServer`), a `dashboard.html` egyoldalas,
+A `dashboard/server.py` egy szabványkönyvtári HTTP-szerver (`ThreadingHTTPServer`; a kéréseket a `request_handler.py`, az üzleti hívásokat a `dashboard_service.py` intézi), a `dashboard/static/dashboard.html` egyoldalas,
 keretrendszer nélküli JavaScript-felület. A Tanulás nézet fülei: Jelöltsor (kártyák, a jelölt saját oldala),
 Backlog-naptár, Javaslatok, Tudás, Paraméterek.
 
@@ -451,24 +494,32 @@ ablakban mutatja.
 
 ## 11. Bővítés
 
-- **Új gyári detektor**: a `docs/DIAGNOSTICS.md` „Új diagnosztika – ellenőrzőlista” szerint: osztály a
-  `models/diagnostics` alá (a három család egyikéből), `threshold_definitions`, `classify`, `describe`, és a
-  család absztrakt metódusa (`accumulate`, `observe_incidents` vagy `observe_issues`); regisztrálás az `analyzer.py`-ban. Ha jóváhagyásos módban is
-  fut, adjon `signal_label`-t, gazdag `signal_items`-t, és ha lehet, `child_units`-ot.
-- **Új mérés a mintakereséshez**: `MeasureDef` a `models/discovery/measures.py`-ban, az értéke az adatlapon
-  (`profile.py`), a küszöbe a paraméterek közt (`config.py`).
-- **Új almérés-változó vagy függvény**: egy `_var_…` / `_fn_…` függvény és egy sor a `VARIABLES` / `FUNCTIONS`
-  táblában (`children.py`); a felület szókincs-súgója magától frissül.
-- **Új gyári próba** (a gép próbálkozásai): egy sor a `PROBES` vagy a `GROUP_PROBES` táblában.
-- **Új lezárási tanulság**: a `lessons.py` katalógusa és a `DiscoveryService.close_issue_with_lesson` ága.
+- **Új gyári detektor**: a `docs/DIAGNOSTICS.md` „Új diagnosztika – ellenőrzőlista” szerint: új fájl a
+  `model/diagnostics/detectors/` alá, egy osztály a három család egyikéből; `threshold_definitions`, `classify`,
+  `describe`, és a család absztrakt metódusa (`accumulate`, `observe_incidents` vagy `observe_issues`); regisztrálás
+  az `engine/analyzer.py`-ban. Ha jóváhagyásos módban is fut, adjon `signal_label`-t, gazdag `signal_items`-t, és ha
+  lehet, `child_units`-ot. A tesztje: `tests/model/diagnostics/test_<detektor>.py`.
+- **Új mérés a mintakereséshez**: `MeasureDef` a `learning/mining/measures.py`-ban, az értéke az adatlapon
+  (`learning/mining/profiles.py`), a küszöbe a paraméterek közt (`learning/discovery_config.py`).
+- **Új almérés-változó vagy függvény**: egy `_var_…` függvény és egy sor a `VARIABLES` táblában
+  (`learning/children/variables.py`), illetve egy `_fn_…` függvény és egy sor a `FUNCTIONS` táblában
+  (`learning/children/expression_language.py`); a felület szókincs-súgója magától frissül.
+- **Új gyári próba** (a gép próbálkozásai): egy sor a `PROBES` vagy a `GROUP_PROBES` táblában
+  (`learning/children/probes.py`).
+- **Új lezárási tanulság**: a `learning/feedback/lessons.py` katalógusa és a
+  `DiscoveryService.close_issue_with_lesson` ága.
+- **Új adatfájl vagy mappa**: az útvonal a `config/paths.py`-ba, a leírása a `data/README.md`-be.
 
 ## 12. Tesztelés és validálás
 
-- **Egységtesztek** (`tests/`, `python -m unittest discover -s tests`): a mérések, a detektorok, a mintakeresés, a
-  tudás, a döntések, az almérések, a tanulság, a mentés és a szolgáltatás végpontjai.
-- **Szintetikus adat** (`build_synthetic.py`, `synthetic/generator.py`, `synthetic/faults.py`): valódi incidensek
-  újramintavételezésével készült előtörténet, beültetett hibákkal és megoldókulccsal.
-- **Backtest és hangolás** (`backtest.py`, `tune.py`): mikor és mennyi zajjal jelennek meg a beültetett hibák.
-- **Tanulási szimuláció** (`learning_demo.py`, `synthetic/learning_sim.py`): egy szimulált elemző a mostani menet
-  szerint dönt, egy tanulás nélküli kör az összehasonlító alap; az eredmény a döntésszám, a megtalált hibák ideje és
-  a tipp egyezése.
+- **Egységtesztek**: `python -m unittest discover -s tests -t .` a projekt gyökeréből. A `tests/` a csomagokat
+  tükrözi (`tests/model/…`, `tests/engine/…`, `tests/learning/…`, `tests/storage/…`, `tests/simulation/…`); egy
+  tesztfájl egy egységet tesztel, a fájl első sora megnevezi, melyiket. A több tesztfájlban használt tesztadatok és
+  segédek a `tests/support/*_fixtures.py` modulokban vannak.
+- **Szintetikus adat** (`python -m simulation.synthetic.build_synthetic`; `simulation/synthetic/generator.py`,
+  `faults.py`): valódi incidensek újramintavételezésével készült előtörténet, beültetett hibákkal és megoldókulccsal.
+- **Backtest és hangolás** (`python -m simulation.experiments.backtest_cli`, `python -m simulation.experiments.tune`):
+  mikor és mennyi zajjal jelennek meg a beültetett hibák.
+- **Tanulási szimuláció** (`python -m simulation.experiments.learning_demo`; `simulation/experiments/learning_sim.py`):
+  egy szimulált elemző a mostani menet szerint dönt, egy tanulás nélküli kör az összehasonlító alap; az eredmény a
+  döntésszám, a megtalált hibák ideje és a tipp egyezése.
