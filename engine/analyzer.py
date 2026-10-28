@@ -1,3 +1,4 @@
+from config.paths import DATA_DIR
 from dataclasses import replace
 from datetime import datetime
 from typing import Any, Dict, Iterable, List
@@ -26,7 +27,8 @@ class IncidentAnalyzer:
     Fájlt nem olvas és nem ír: a betöltést/mentést a hívó végzi a repository tranzakciójában.
     """
 
-    def __init__(self, thresholds_path: str = "database.json.thresholds.json", knowledge_path: str = "knowledge.json"):
+    def __init__(self, thresholds_path: str = str(DATA_DIR / "thresholds.json"),
+                 knowledge_path: str = str(DATA_DIR / "knowledge.json")):
         self.issue_manager = IssueManager()
         # A közös tudástár (L1-csoportok, funkció-elérhetőség, ...): a feltárási konzol írja
         self.knowledge = KnowledgeBase(path=knowledge_path)

@@ -4,17 +4,7 @@ __pycache__/
 venv/
 .venv/
 
-# Valódi (céges) adat és belőle származó állapot: nem kerül a repóba
-data.xlsx
+# Adatok: valódi (céges) adat, belőle származó állapot és generált idősorok – nem kerülnek a repóba
+data/*
+!data/README.md
 ~$*.xlsx
-database.json
-database.json.thresholds.json
-discovery_state.json
-knowledge.json
-backups/
-transformed_timeline.json
-simulation_source.json
-
-# Generált szintetikus idősorok (több száz MB; build_synthetic.py újragenerálja)
-synthetic_timeline*.json
-learning_demo.json

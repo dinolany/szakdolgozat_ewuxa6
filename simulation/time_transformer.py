@@ -1,3 +1,4 @@
+from config.paths import DATA_DIR
 from collections import defaultdict
 from datetime import datetime, timedelta
 import json
@@ -26,7 +27,7 @@ class TimeTransformer:
     def __init__(
         self,
         raw_source: Callable[[], List[Dict[str, Any]]] | None = None,
-        output_filename: str = "transformed_timeline.json",
+        output_filename: str = str(DATA_DIR / "transformed_timeline.json"),
         source_fingerprint: Callable[[], str | None] | None = None,
     ):
         self.raw_source = raw_source

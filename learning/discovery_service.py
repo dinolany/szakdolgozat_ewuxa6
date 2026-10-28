@@ -9,6 +9,7 @@ tudástárat, és a fő elemzővel együtt dolgozik:
 Minden művelet a szolgáltatás zárja alatt fut, és utána menti az állapotot.
 """
 
+from config.paths import CONFIG_DIR, DATA_DIR
 from datetime import datetime, timedelta
 import json
 from pathlib import Path
@@ -61,8 +62,8 @@ def _measure_label(key: str) -> str:
     return measure.label if measure else key
 
 class DiscoveryService:
-    def __init__(self, analyzer: Any, repository: Any, state_path: str = "discovery_state.json",
-                 config_path: str = "config/discovery.json"):
+    def __init__(self, analyzer: Any, repository: Any, state_path: str = str(DATA_DIR / "discovery_state.json"),
+                 config_path: str = str(CONFIG_DIR / "discovery.json")):
         """A tanuló modul szolgáltatása: a feltárási állapot betöltése, a kezelő és a közös tudástár; a tanult elvető
         szabályokat a gyári detektorok elé köti.
 

@@ -1,3 +1,4 @@
+from config.paths import DATA_DIR
 import json
 from pathlib import Path
 import threading
@@ -12,7 +13,7 @@ from storage.threshold_store import THRESHOLDS
 class DashboardService:
     SIMULATION_DURATIONS = {600, 3600, 0}
 
-    def __init__(self, db_path: str = "database.json", scheduler=None, repository=None, analyzer=None, discovery=None):
+    def __init__(self, db_path: str = str(DATA_DIR / "database.json"), scheduler=None, repository=None, analyzer=None, discovery=None):
         self.db_path = Path(db_path)
         # Ugyanazokat a példányokat kell kapnia, mint az eseményfeldolgozónak, különben
         # két író felülírja egymást, és a küszöbváltozást az elemzés nem látná

@@ -16,7 +16,7 @@ from storage.incident_repository import IncidentRepository
 
 
 # Repository példányosítása a database.json fájlra
-repo = IncidentRepository("database.json")
+repo = IncidentRepository(str(DATA_DIR / "database.json"))
 
 def refresh_dashboard(auto_open: bool = False):
     """Az adatbázis állapotának kiírása, és kérésre a dashboard megnyitása a böngészőben."""
@@ -44,7 +44,7 @@ if __name__ == "__main__":
     # A transzformer csak üres vagy elavult timeline cache esetén kéri el a nyers adatot a loadertől
     transformer = TimeTransformer(
         raw_source=load_excel,
-        output_filename="transformed_timeline.json",
+        output_filename=str(DATA_DIR / "transformed_timeline.json"),
         source_fingerprint=excel_fingerprint,
     )
     playback_queue = PlaybackQueue()
@@ -52,7 +52,7 @@ if __name__ == "__main__":
     timeline_source = TimelineSelector(transformer)
 
     # Eseményfeldolgozás: a csomagokat incidensekre alkalmazza, elemez, és a repóval ment
-    analyzer = IncidentAnalyzer(thresholds_path="database.json.thresholds.json")
+    analyzer = IncidentAnalyzer()
     # A feltárási ("tanuló") kör: a kötegek után naponta fut, a dashboardról vezérelhető
     discovery = DiscoveryService(analyzer, repo)
     event_processor = IncidentEventProcessor(repository=repo, analyzer=analyzer, discovery=discovery)

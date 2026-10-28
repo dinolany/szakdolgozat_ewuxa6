@@ -1,3 +1,4 @@
+from config.paths import DATA_DIR
 from contextlib import contextmanager
 from enum import Enum
 import json
@@ -19,7 +20,7 @@ class IncidentRepository:
     Üzleti logikát nem tartalmaz; a módosításokat a hívók a transaction() blokkjában végzik.
     """
 
-    def __init__(self, db_file: str = "database.json"):
+    def __init__(self, db_file: str = str(DATA_DIR / "database.json")):
         self.db_file = db_file
         # Újrabelépő zár: egy tranzakción belül ugyanaz a szál további repository hívásokat tehet
         self._write_lock = threading.RLock()

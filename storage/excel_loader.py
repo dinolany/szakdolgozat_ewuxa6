@@ -1,10 +1,11 @@
 # loader.py
+from config.paths import DATA_DIR
 import os
 import pandas as pd
 from typing import Any, Dict, List
 
 
-def excel_fingerprint(excel_path: str = "data.xlsx") -> str | None:
+def excel_fingerprint(excel_path: str = str(DATA_DIR / "data.xlsx")) -> str | None:
     """Az Excel aktuális állapotának azonosítója (méret + módosítási idő); None, ha nincs meg a fájl."""
     try:
         stat = os.stat(excel_path)
@@ -13,7 +14,7 @@ def excel_fingerprint(excel_path: str = "data.xlsx") -> str | None:
     return f"{os.path.abspath(excel_path)}|{stat.st_size}|{stat.st_mtime_ns}"
 
 
-def load_excel(excel_path: str = "data.xlsx", sheet_name: str = "inc_history") -> List[Dict[str, Any]]:
+def load_excel(excel_path: str = str(DATA_DIR / "data.xlsx"), sheet_name: str = "inc_history") -> List[Dict[str, Any]]:
     """Kizárólag az audit log Excel beolvasása nyers rekordlistává (transzformáció nélkül)."""
     if not os.path.exists(excel_path):
         raise FileNotFoundError(

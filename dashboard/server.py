@@ -1,3 +1,4 @@
+from config.paths import DATA_DIR
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 import threading
@@ -14,7 +15,7 @@ class _DashboardHTTPServer(ThreadingHTTPServer):
     daemon_threads = True
 
 def start_dashboard_server(
-    database_path: str = "database.json",
+    database_path: str = str(DATA_DIR / "database.json"),
     dashboard_path: str = "dashboard.html",
     host: str = "127.0.0.1",
     port: int = 8765,
