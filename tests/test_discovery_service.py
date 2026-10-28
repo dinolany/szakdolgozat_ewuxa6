@@ -3,10 +3,10 @@ import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from analyzer import IncidentAnalyzer
-from event_processor import IncidentEventProcessor
-from models.discovery.service import DiscoveryService
-from repository import IncidentRepository
+from engine.analyzer import IncidentAnalyzer
+from engine.event_processor import IncidentEventProcessor
+from learning.service import DiscoveryService
+from storage.incident_repository import IncidentRepository
 
 
 def events_for_day(day: datetime, count: int = 6):

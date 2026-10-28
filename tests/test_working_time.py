@@ -2,8 +2,8 @@ import unittest
 from collections import Counter
 from datetime import datetime
 
-from models.knowledge_base import KnowledgeBase
-from models.working_time import Schedule, fact_args, infer_schedule, schedule_from_fact
+from model.knowledge.knowledge_base import KnowledgeBase
+from model.working_time.schedule import Schedule, fact_args, infer_schedule, schedule_from_fact
 
 WEEKDAYS_8_16 = Schedule(frozenset(range(5)), 8, 16)
 
@@ -46,8 +46,8 @@ class ScheduleTest(unittest.TestCase):
 
 class StintPickupInWorkingHoursTest(unittest.TestCase):
     def test_pickup_measured_in_working_hours(self):
-        from models.discovery.profile import stint_profiles
-        from models.timeline import incident_timeline
+        from learning.profile import stint_profiles
+        from model.timeline.ticket_timeline import incident_timeline
         from tests.test_discovery import make_incident
         events = [("2026-08-07T15:00:00", "state", None, "1"), ("2026-08-07T15:00:00", "assignment_group", "", "L1"),
                   ("2026-08-07T15:30:00", "assignment_group", "L1", "G"), ("2026-08-10T08:30:00", "assigned_to", "", "agent")]
@@ -61,7 +61,7 @@ class StintPickupInWorkingHoursTest(unittest.TestCase):
 
 class CompanyScheduleTest(unittest.TestCase):
     def test_company_schedule_applies_where_group_has_none(self):
-        from models.knowledge_base import KnowledgeBase
+        from model.knowledge.knowledge_base import KnowledgeBase
         kb = KnowledgeBase()
         kb.add_fact("munkaido", {"csoport": "*", "napok": "Mon,Tue,Wed,Thu,Fri", "tol": "8", "ig": "17"})
         kb.add_fact("munkaido", {"csoport": "NIGHT", "napok": "*", "tol": "20", "ig": "6"})

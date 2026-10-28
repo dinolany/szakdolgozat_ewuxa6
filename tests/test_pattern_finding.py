@@ -1,13 +1,13 @@
 import unittest
 from datetime import datetime, timedelta
 
-from issue_manager import IssueManager
-from models.diagnostics.core import MeasurementContext, Trigger
-from models.diagnostics.pattern_finding import PatternFindingDiagnosis
-from models.discovery.knowledge import Candidate, CandidateState, Verdict, make_candidate_id
-from models.discovery.manager import DiscoveryManager
-from models.discovery.promotion import promote_finding
-from models.issue import Issue, IssueState
+from engine.issue_manager import IssueManager
+from model.diagnostics.core import MeasurementContext, Trigger
+from learning.pattern_finding_diagnosis import PatternFindingDiagnosis
+from learning.knowledge import Candidate, CandidateState, Verdict, make_candidate_id
+from learning.manager import DiscoveryManager
+from learning.promotion import promote_finding
+from model.issue import Issue, IssueState
 from tests.test_discovery import make_incident
 from tests.test_knowledge import ingest, result
 

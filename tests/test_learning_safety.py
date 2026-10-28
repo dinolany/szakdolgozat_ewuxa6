@@ -6,11 +6,11 @@ import unittest
 from datetime import datetime
 from pathlib import Path
 
-from analyzer import IncidentAnalyzer
-from models import backup
-from models.discovery.knowledge import CandidateState, Scope, Verdict
-from models.discovery.service import DiscoveryService
-from repository import IncidentRepository
+from engine.analyzer import IncidentAnalyzer
+from storage import backup
+from learning.knowledge import CandidateState, Scope, Verdict
+from learning.service import DiscoveryService
+from storage.incident_repository import IncidentRepository
 from tests.test_knowledge import DAY, cid, ingest, result
 
 G = (("assignment_group", "G"),)

@@ -1,17 +1,17 @@
 import unittest
 from datetime import datetime, timedelta
 
-from issue_manager import IssueManager
-from models.diagnostics.core import MeasurementContext, Trigger
-from models.diagnostics.pattern_finding import PatternFindingDiagnosis
-from models.discovery import MEASURES_BY_KEY, MiningParams, mine
-from models.discovery.baseline import pattern_counts
-from models.discovery.knowledge import Candidate, CandidateState, make_candidate_id
-from models.discovery.manager import DiscoveryManager
-from models.discovery.profile import build_profiles, profile_from_timeline, stint_profiles
-from models.discovery.promotion import promote_finding
-from models.knowledge_base import KnowledgeView
-from models.timeline import incident_timeline
+from engine.issue_manager import IssueManager
+from model.diagnostics.core import MeasurementContext, Trigger
+from learning.pattern_finding_diagnosis import PatternFindingDiagnosis
+from learning import MEASURES_BY_KEY, MiningParams, mine
+from learning.baseline import pattern_counts
+from learning.knowledge import Candidate, CandidateState, make_candidate_id
+from learning.manager import DiscoveryManager
+from learning.profile import build_profiles, profile_from_timeline, stint_profiles
+from learning.promotion import promote_finding
+from model.knowledge.knowledge_base import KnowledgeView
+from model.timeline.ticket_timeline import incident_timeline
 from tests.test_discovery import make_incident
 
 START = datetime(2026, 8, 3)  # hétfő

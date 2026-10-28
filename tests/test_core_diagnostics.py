@@ -1,17 +1,17 @@
 import unittest
 from datetime import datetime, timedelta
 
-from issue_manager import IssueManager
-from models.diagnostics.backlog_aging import BacklogAgingDiagnosis
-from models.diagnostics.flapping import FlappingDiagnosis
-from models.diagnostics.issue_trend import IssueTrendDiagnosis
-from models.diagnostics.registry import DiagnosticRegistry
-from models.diagnostics.similar_description import SimilarDescriptionDiagnosis
-from models.diagnostics.ticket_volume import TicketVolumeDiagnosis
-from models.diagnostics.core import MeasurementContext, Trigger
-from models.diagnostics.ping_pong import PingPongDiagnosis
-from models.diagnostics.unassigned import UnassignedDiagnosis
-from models.knowledge_base import KnowledgeView
+from engine.issue_manager import IssueManager
+from model.diagnostics.detectors.backlog_aging import BacklogAgingDiagnosis
+from model.diagnostics.detectors.flapping import FlappingDiagnosis
+from model.diagnostics.detectors.issue_trend import IssueTrendDiagnosis
+from model.diagnostics.registry import DiagnosticRegistry
+from model.diagnostics.detectors.similar_description import SimilarDescriptionDiagnosis
+from model.diagnostics.detectors.ticket_volume import TicketVolumeDiagnosis
+from model.diagnostics.core import MeasurementContext, Trigger
+from model.diagnostics.detectors.ping_pong import PingPongDiagnosis
+from model.diagnostics.detectors.unassigned import UnassignedDiagnosis
+from model.knowledge.knowledge_base import KnowledgeView
 from tests.test_discovery import make_incident
 
 T0 = datetime(2026, 8, 3, 8)

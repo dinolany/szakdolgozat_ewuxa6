@@ -1,11 +1,11 @@
 import unittest
 from datetime import datetime, timedelta
 
-from models.discovery.children import (ChildDef, UnitContext, compile_expression, evaluate, rows_to_expression,
+from learning.children import (ChildDef, UnitContext, compile_expression, evaluate, rows_to_expression,
                                        run_child, trigger_matches, trigger_options)
-from models.discovery.knowledge import CandidateState, Verdict
-from models.discovery.manager import DiscoveryManager
-from models.timeline import incident_timeline
+from learning.knowledge import CandidateState, Verdict
+from learning.manager import DiscoveryManager
+from model.timeline.ticket_timeline import incident_timeline
 from tests.test_discovery import make_incident
 from tests.test_knowledge import DAY, cid, ingest, result
 
@@ -130,8 +130,8 @@ if __name__ == "__main__":
 
 class DimensionAndReviewTest(unittest.TestCase):
     def test_grouping_child_as_search_dimension_uses_its_value(self):
-        from models.discovery.profile import build_profiles
-        from models.knowledge_base import KnowledgeBase
+        from learning.profile import build_profiles
+        from model.knowledge.knowledge_base import KnowledgeBase
         knowledge = KnowledgeBase()
         manager = DiscoveryManager({}, knowledge=knowledge)
         child = manager.add_child("Ráadó csoport", "elozo_csoport", method="group", as_dimension=True)
@@ -150,8 +150,8 @@ class DimensionAndReviewTest(unittest.TestCase):
         self.assertEqual((changed.role, changed.auto), ("alert", False))
 
     def test_child_as_search_dimension(self):
-        from models.discovery.profile import build_profiles
-        from models.knowledge_base import KnowledgeBase
+        from learning.profile import build_profiles
+        from model.knowledge.knowledge_base import KnowledgeBase
         knowledge = KnowledgeBase()
         manager = DiscoveryManager({}, knowledge=knowledge)
         child = manager.add_child("Close notes-szal zárta", 'lezarta and kitoltve("close_notes")', as_dimension=True)
@@ -171,7 +171,7 @@ class DimensionAndReviewTest(unittest.TestCase):
 
     def test_mining_splits_by_child_dimension(self):
         import random
-        from models.discovery import MiningParams, mine
+        from learning import MiningParams, mine
         from tests.test_discovery import PICKUP, make_profile
         rng = random.Random(3)
         profiles = []
@@ -185,7 +185,7 @@ class DimensionAndReviewTest(unittest.TestCase):
         self.assertIn((("almeres:CHD-0001", "igen"),), found)
 
     def test_review_reasons(self):
-        from models.discovery.children import ChildReviewParams, review_children
+        from learning.children import ChildReviewParams, review_children
         now = datetime(2026, 9, 1)
         base = dict(expression="lezarta", created_at="2026-08-01T00:00:00")
         children = [
@@ -214,7 +214,7 @@ class ReviewConfigTest(unittest.TestCase):
     def test_review_params_ignore_child_keys(self):
         import tempfile
         from pathlib import Path
-        from models.discovery.config import DiscoveryConfig
+        from learning.config import DiscoveryConfig
         with tempfile.TemporaryDirectory() as tmp:
             config = DiscoveryConfig(str(Path(tmp) / "discovery.json"))
             self.assertEqual(config.review_params().min_contradictions, 3)
@@ -331,7 +331,7 @@ class TimeVocabularyTest(unittest.TestCase):
         self.assertEqual(evaluate(compile_expression('elozo_csoport == ""'), first), True)
 
     def test_group_schedule_decides_working_time(self):
-        from models.working_time import Schedule
+        from model.working_time.schedule import Schedule
         timeline = quick_close("I1", 10)
         night = {"G": Schedule(frozenset(range(7)), 20, 6)}   # éjszakás csoport: hétfő 9-kor nincs munkaidő
         g = UnitContext(timeline, timeline.stints[1], {}, night)

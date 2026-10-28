@@ -1,51 +1,34 @@
-import os
-import sys
 import threading
 import traceback
 
-from dashboard_generator import generate_dashboard, reset_dashboard
-from analyzer import IncidentAnalyzer
-from dashboard_server import start_dashboard_server
-from event_processor import IncidentEventProcessor
-from models.discovery.service import DiscoveryService
-from timeline_sources import TimelineSelector
-from loader import excel_fingerprint, load_excel
-from repository import IncidentRepository
-from time_transformer import TimeTransformer
-from playback_queue import PlaybackQueue
-from simulation_scheduler import SimulationScheduler
+from config.paths import DASHBOARD_HTML, DATA_DIR
+from dashboard.launcher import open_dashboard
+from engine.analyzer import IncidentAnalyzer
+from dashboard.server import start_dashboard_server
+from engine.event_processor import IncidentEventProcessor
+from learning.service import DiscoveryService
+from simulation.timeline_selector import TimelineSelector
+from storage.excel_loader import excel_fingerprint, load_excel
+from storage.incident_repository import IncidentRepository
+from simulation.time_transformer import TimeTransformer
+from simulation.playback_queue import PlaybackQueue
+from simulation.simulation_scheduler import SimulationScheduler
 
 # Repository példányosítása a database.json fájlra
 repo = IncidentRepository("database.json")
 
 def refresh_dashboard(auto_open: bool = False):
-    """Generálja a Dashboard HTML-t a database.json alapján."""
+    """Az adatbázis állapotának kiírása, és kérésre a dashboard megnyitása a böngészőben."""
     try:
         count = repo.count()
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        json_path = os.path.join(base_dir, "database.json")
-        html_path = os.path.join(base_dir, "dashboard.html")
-
         if count == 0:
-            if auto_open:
-                reset_dashboard(
-                    json_path=json_path,
-                    output_html=html_path,
-                    open_browser=auto_open,
-                )
             print("\n[INFO] A database.json jelenleg üres.")
-            return
-
-        print(f"\n🛠 [DASHBOARD] HTML generálás indítása... ({count} db Incidens)")
-        generate_dashboard(
-            json_path=json_path,
-            output_html=html_path,
-            open_browser=auto_open,
-        )
-        print(f"\n[DATABASE EXPORT] Frissítve -> '{html_path}' ({count} db Incidens)")
-
+        else:
+            print(f"\n[DASHBOARD] {count} db incidens az adatbázisban.")
+        if auto_open:
+            open_dashboard()
     except Exception as e:
-        print(f"\n❌ [HIBA] A Dashboard generálása meghiúsult: {e}")
+        print(f"\n❌ [HIBA] A dashboard megnyitása meghiúsult: {e}")
         traceback.print_exc()
 
 def trigger_dashboard_async(auto_open: bool = False):
@@ -85,10 +68,9 @@ if __name__ == "__main__":
     )
 
     # 2. Dashboard szerver elindítása a schedulerrel
-    base_dir = os.path.dirname(os.path.abspath(__file__))
     dashboard_server = start_dashboard_server(
-        database_path=os.path.join(base_dir, "database.json"),
-        dashboard_path=os.path.join(base_dir, "dashboard.html"),
+        database_path=str(DATA_DIR / "database.json"),
+        dashboard_path=str(DASHBOARD_HTML),
         scheduler=scheduler,
         repository=repo,  # ugyanazok a példányok, mint az eseményfeldolgozóé
         analyzer=analyzer,

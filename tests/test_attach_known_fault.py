@@ -1,12 +1,12 @@
 import unittest
 from types import SimpleNamespace
 
-from issue_manager import IssueManager
-from models.discovery.knowledge import CandidateState, Verdict
-from models.discovery.manager import DiscoveryManager
-from models.discovery.service import DiscoveryService
-from models.issue import Issue, IssueState
-from models.knowledge_base import KnowledgeBase
+from engine.issue_manager import IssueManager
+from learning.knowledge import CandidateState, Verdict
+from learning.manager import DiscoveryManager
+from learning.service import DiscoveryService
+from model.issue import Issue, IssueState
+from model.knowledge.knowledge_base import KnowledgeBase
 from tests.test_knowledge import DAY, cid, ingest, result
 
 G_SAT = (("assignment_group", "G"), ("weekday", "Sat"))

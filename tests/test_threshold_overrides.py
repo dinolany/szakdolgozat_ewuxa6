@@ -1,10 +1,10 @@
 import unittest
 from datetime import datetime
 
-from models.diagnostics.core import MeasurementContext, Trigger
-from models.diagnostics.core.threshold_overrides import ThresholdOverride, resolve
-from models.diagnostics.ping_pong import PingPongDiagnosis
-from models.knowledge_base import KnowledgeBase
+from model.diagnostics.core import MeasurementContext, Trigger
+from model.diagnostics.core.threshold_overrides import ThresholdOverride, resolve
+from model.diagnostics.detectors.ping_pong import PingPongDiagnosis
+from model.knowledge.knowledge_base import KnowledgeBase
 from tests.test_discovery import make_incident
 
 BASE = {"moderate_moves": 3, "extreme_moves": 5}

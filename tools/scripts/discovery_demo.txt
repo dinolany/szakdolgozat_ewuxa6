@@ -1,0 +1,71 @@
+# === Feltárási ciklus végigjátszása a valódi két héten
+# Futtatás: python -m tools.discovery_cli --reset --script tools/scripts/discovery_demo.txt
+#
+# A csavarhúzó beállítása: alacsony küszöbök (2 rossz ticket már minta lehet, 25% hamis felfedezés
+# megengedett), a hold-idő 72 órától számít rossznak, és napi 10 jelölt kerül az elemző elé.
+config measures hold_time 72
+config mining min_support 2
+config mining fdr_q 0.25
+config queue daily_limit 10
+
+# --- 1. nap (hétfő, 08-03): az első feltárás
+run 2026-08-03
+show weekday=Sat
+# A szombati lassú felvétel ismert: hétvégén nincs ügyelet. Ez minden időfüggő mérésre
+# (felvétel, hold) igaz szombaton és vasárnap -> saját szabály, nem csak ez a minta
+reject weekday=Sat rule weekday=Sat,Sun measure=pickup_delay,hold_time
+rules
+
+# --- 4. nap (csütörtök, 08-06): megjelennek a ping-pong minták
+next 3
+show subcategory=3
+# Az alkategória-3 ping-pong érdekes, de még kevés: figyeljük, megismétlődik-e új ticketekkel
+watch subcategory=3
+# A b7a5 szolgáltatás ping-pongja egyértelmű: finding
+finding business_service=b7a5bef04f483f0474f436e18110c7b5
+issues
+# A csütörtöki szűkítés egyszeri zajnak tűnik: csak erre az előfordulásra vetjük el
+reject subcategory=3&weekday=Thu once
+# A b7a5-ös szűkítéseket a finding lefedi: felére csökken a prioritásuk, ezért most kiszorulnak
+# a napi keretből (a későbbi napokon "lefedi" jelzéssel jelennek meg)
+queue
+
+# --- 5. nap (péntek, 08-07): esti órák
+next
+# A 19 órás lassú felvétel munkaidőn kívüli: ez a minta mindig elvethető
+reject hour=19 pattern
+# A 18 órás minta tippet kap a 19 órás döntésből (közös: óra-dimenzió, ugyanaz a mérés)
+show hour=18
+reject hour=18 pattern
+
+# --- 6. nap (szombat, 08-08): a hétvégi szabály elrejt egy új szombati mintát
+next
+hidden
+
+# --- 9. nap (kedd, 08-11) és 10. nap (szerda, 08-12): a figyelt minta új ticketekkel ismétlődik
+next 3
+next
+show subcategory=3
+finding subcategory=3
+
+# --- 12. nap (péntek, 08-14): újabb szombati minta (hold-idő) akad fenn a szabályon
+next 2
+rules
+hidden RULE-0001
+# Tegyük fel, kiderül, hogy a hold-időre a hétvége nem magyarázat: visszavonjuk a szabályt,
+# az általa rejtett jelöltek visszakerülnek a sorba (a napi keret miatt a sor végére, ezért közvetlenül nézzük)
+rule revoke RULE-0001 a hold-időt a hétvége nem magyarázza
+show business_service=13e71da5db87d99415f20dcbd396197f&weekday=Sat
+
+# --- Tény rögzítése (a valódi két hétben nincs csoport+nap minta, a hatását az egységtesztek igazolják)
+fact add nem_dolgozik csoport=58d85ce63790ea00e3f0579543990ee6 nap=Wed
+facts
+rules
+
+# --- Összegzés: a findingokból lett issue-k (minden futás újramérte őket), döntésnapló, tanulási mutatók
+issues
+log
+stats
+# Két héttel később: a b7a5 minta kifut a 7 napos ablakból -> OUTDATED
+run 2026-08-28
+issues

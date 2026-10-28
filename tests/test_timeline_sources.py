@@ -4,7 +4,7 @@ import unittest
 from datetime import datetime
 from pathlib import Path
 
-from timeline_sources import TimelineSelector
+from simulation.timeline_selector import TimelineSelector
 
 
 class FakeTransformer:

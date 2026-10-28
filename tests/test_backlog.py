@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime
 
-from models.discovery.backlog import calendar, time_marks
+from learning.backlog import calendar, time_marks
 
 
 class BacklogCalendarTest(unittest.TestCase):

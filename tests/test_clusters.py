@@ -1,8 +1,8 @@
 import unittest
 
-from models.discovery.clusters import find_clusters, reach
-from models.discovery.knowledge import CandidateState
-from models.discovery.manager import DiscoveryManager
+from learning.clusters import find_clusters, reach
+from learning.knowledge import CandidateState
+from learning.manager import DiscoveryManager
 from tests.test_knowledge import DAY, cid, ingest, result
 
 G = (("assignment_group", "G"),)

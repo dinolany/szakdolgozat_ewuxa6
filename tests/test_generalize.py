@@ -1,7 +1,7 @@
 import unittest
 
-from models.discovery.generalize import suggestions
-from models.discovery.knowledge import Rule
+from learning.generalize import suggestions
+from learning.knowledge import Rule
 
 
 def rule(rule_id, conditions, measures=None, source="decision:DEC-1"):
@@ -64,8 +64,8 @@ class BreakdownPathTest(unittest.TestCase):
     def test_blocked_path_in_mining_and_matching(self):
         import random
         from datetime import datetime, timedelta
-        from models.discovery import MiningParams, mine
-        from models.discovery.mining import path_blocked
+        from learning import MiningParams, mine
+        from learning.mining import path_blocked
         from tests.test_discovery import PICKUP, make_profile
         self.assertTrue(path_blocked({"weekday", "assignment_group"}, "subcategory", [("nap", "subcategory")]))
         self.assertTrue(path_blocked({"date"}, "subcategory", [("nap", "subcategory")]))

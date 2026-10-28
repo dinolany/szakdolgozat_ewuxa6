@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime
 
-from models.discovery import follow_up as fu
+from learning import follow_up as fu
 
 NOW = "2026-08-01T00:00:00"
 
@@ -33,9 +33,9 @@ class FollowUpTest(unittest.TestCase):
 
 class IssueKeepsAnalystDataTest(unittest.TestCase):
     def test_lesson_and_follow_up_survive_remeasurement(self):
-        from models.diagnostics.core import MeasurementContext, Trigger
-        from models.diagnostics.ping_pong import PingPongDiagnosis
-        from models.issue import Issue
+        from model.diagnostics.core import MeasurementContext, Trigger
+        from model.diagnostics.detectors.ping_pong import PingPongDiagnosis
+        from model.issue import Issue
         from tests.test_discovery import make_incident
         events = [("2026-08-03T08:00:00", "state", None, "1"), ("2026-08-03T08:00:00", "assignment_group", "", "A"),
                   ("2026-08-03T09:00:00", "assignment_group", "A", "G"), ("2026-08-03T10:00:00", "assignment_group", "G", "B"),

@@ -2,10 +2,10 @@ import random
 import unittest
 from datetime import datetime, timedelta
 
-from models.discovery import MEASURES_BY_KEY
-from models.discovery.knowledge import make_candidate_id
-from models.discovery.manager import DiscoveryManager
-from models.discovery.trend import TrendParams, mine_trends
+from learning import MEASURES_BY_KEY
+from learning.knowledge import make_candidate_id
+from learning.manager import DiscoveryManager
+from learning.trend import TrendParams, mine_trends
 from tests.test_discovery import make_profile
 
 PICKUP = MEASURES_BY_KEY["pickup_delay"]

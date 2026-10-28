@@ -3,16 +3,16 @@ import unittest
 from datetime import timedelta
 from pathlib import Path
 
-from analyzer import IncidentAnalyzer
-from config.thresholds import ThresholdManager
-from issue_manager import IssueManager
-from models.diagnostics.core import MeasurementContext, Trigger
-from models.diagnostics.feature_usage import FeatureUsageDiagnosis
-from models.diagnostics.registry import DiagnosticRegistry
-from models.discovery.knowledge import CandidateState
-from models.discovery.service import DiscoveryService
-from models.knowledge_base import KnowledgeView
-from repository import IncidentRepository
+from engine.analyzer import IncidentAnalyzer
+from storage.threshold_store import ThresholdManager
+from engine.issue_manager import IssueManager
+from model.diagnostics.core import MeasurementContext, Trigger
+from model.diagnostics.detectors.feature_usage import FeatureUsageDiagnosis
+from model.diagnostics.registry import DiagnosticRegistry
+from learning.knowledge import CandidateState
+from learning.service import DiscoveryService
+from model.knowledge.knowledge_base import KnowledgeView
+from storage.incident_repository import IncidentRepository
 from tests.test_feature_usage import AS_OF, incidents
 
 

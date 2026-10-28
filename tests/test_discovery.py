@@ -4,11 +4,11 @@ import random
 import unittest
 from datetime import datetime, timedelta
 
-from models.discovery import MEASURES_BY_KEY, MiningParams, TicketProfile, build_profile, mine
-from models.discovery.baseline import freeze_baseline, non_overlapping, pattern_counts
-from models.discovery.mining import benjamini_hochberg, binomial_sf
-from models.history import HistoryLine
-from models.incident import Incident
+from learning import MEASURES_BY_KEY, MiningParams, TicketProfile, build_profile, mine
+from learning.baseline import freeze_baseline, non_overlapping, pattern_counts
+from learning.mining import benjamini_hochberg, binomial_sf
+from model.history_line import HistoryLine
+from model.incident import Incident
 
 PICKUP = MEASURES_BY_KEY["pickup_delay"]
 WEEKDAYS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")

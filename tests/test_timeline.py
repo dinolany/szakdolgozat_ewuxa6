@@ -1,8 +1,8 @@
 import unittest
 from datetime import datetime
 
-from models.history import HistoryLine
-from models.timeline import build_timeline
+from model.history_line import HistoryLine
+from model.timeline.ticket_timeline import build_timeline
 
 T0 = datetime(2026, 8, 3, 8)  # hétfő
 
@@ -108,7 +108,7 @@ class SameMomentAssignmentTest(unittest.TestCase):
 
     def timeline(self, assignee_first):
         from datetime import datetime
-        from models.timeline import incident_timeline
+        from model.timeline.ticket_timeline import incident_timeline
         from tests.test_discovery import make_incident
         transfer = [("2026-08-03T10:00:00", "assignment_group", "A", "B")]
         assign = [("2026-08-03T10:00:00", "assigned_to", "", "b_user")]
@@ -125,7 +125,7 @@ class SameMomentAssignmentTest(unittest.TestCase):
 
     def test_cleared_assignee_is_not_a_pickup(self):
         from datetime import datetime
-        from models.timeline import incident_timeline
+        from model.timeline.ticket_timeline import incident_timeline
         from tests.test_discovery import make_incident
         events = [("2026-08-03T08:00:00", "state", None, "1"), ("2026-08-03T08:00:00", "assignment_group", "", "A"),
                   ("2026-08-03T09:00:00", "assigned_to", "", "a_user"),

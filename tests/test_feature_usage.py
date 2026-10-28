@@ -1,14 +1,14 @@
 import unittest
 from datetime import datetime, timedelta
 
-from models.diagnostics.core import MeasurementContext, Trigger
+from model.diagnostics.core import MeasurementContext, Trigger
 import json
 import tempfile
 from pathlib import Path
 
-from models.diagnostics.feature_usage import FeatureDef, FeatureUsageDiagnosis, load_catalog, occasions
-from models.knowledge_base import KnowledgeView
-from models.timeline import incident_timeline
+from model.diagnostics.detectors.feature_usage import FeatureDef, FeatureUsageDiagnosis, load_catalog, occasions
+from model.knowledge.knowledge_base import KnowledgeView
+from model.timeline.ticket_timeline import incident_timeline
 from tests.test_discovery import make_incident
 
 START = datetime(2026, 8, 3, 9)

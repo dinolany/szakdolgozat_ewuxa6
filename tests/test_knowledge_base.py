@@ -4,12 +4,12 @@ import unittest
 from datetime import datetime
 from pathlib import Path
 
-from issue_manager import IssueManager
-from models.diagnostics.core import Trigger
-from models.diagnostics.feature_usage import FeatureUsageDiagnosis
-from models.diagnostics.registry import DiagnosticRegistry
-from models.discovery.manager import DiscoveryManager
-from models.knowledge_base import KnowledgeBase
+from engine.issue_manager import IssueManager
+from model.diagnostics.core import Trigger
+from model.diagnostics.detectors.feature_usage import FeatureUsageDiagnosis
+from model.diagnostics.registry import DiagnosticRegistry
+from learning.manager import DiscoveryManager
+from model.knowledge.knowledge_base import KnowledgeBase
 from tests.test_feature_usage import AS_OF, incidents
 
 
