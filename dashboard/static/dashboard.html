@@ -414,7 +414,6 @@
               <option>suppressed</option>
               <option>not_relevant</option>
               <option>outdated</option>
-              <option>declined</option>
               <option>archived</option>
             </select>
             <select id="issue-diagnostic"><option value="">Minden diagnosztika</option></select>
@@ -1302,7 +1301,7 @@
           (done.note ? '<div>' + esc(done.note) + '</div>' : '') + '<div class="muted">' + esc(done.text) + '</div>' + efHtml + '</div>' + fuHtml;
       }
       if (!opts) return '<h3>Lezárás tanulsággal</h3><p class="muted">Betöltés…</p>';
-      if (['resolved', 'deleted', 'declined', 'archived'].indexOf(d.state) !== -1) return '';
+      if (['resolved', 'deleted', 'archived'].indexOf(d.state) !== -1) return '';
       var f = state.drawer.lessonForm;
       var dflt = opts.defaults || {};
       var radios = opts.outcomes.map(function(o) {

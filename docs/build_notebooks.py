@@ -2,7 +2,7 @@
 
 A forrás továbbra is az .md fájl; a notebook csak nézet, módosítás után újra kell generálni:
     python docs/build_notebooks.py
-Minden „## ” fejezet külön Markdown-cella lesz (a kódblokkon belüli sorokat nem vágja szét).
+Minden „## ” fejezet és „### ” alfejezet külön Markdown-cella lesz (a kódblokkon belüli sorokat nem vágja szét).
 A Mermaid-diagramokat a JupyterLab 4.1+ magától kirajzolja.
 """
 import json
@@ -13,13 +13,13 @@ OUT = DOCS / "notebooks"
 
 
 def split_sections(text):
-    """A Markdown szöveg fejezetenkénti darabolása a „## ” címeknél, kódblokkon kívül.
+    """A Markdown szöveg darabolása a „## ” és „### ” címeknél, kódblokkon kívül.
     Hívja: build."""
     cells, current, in_fence = [], [], False
     for line in text.splitlines(keepends=True):
         if line.lstrip().startswith("```"):
             in_fence = not in_fence
-        if line.startswith("## ") and not in_fence and current:
+        if line.startswith(("## ", "### ")) and not in_fence and current:
             cells.append(current)
             current = []
         current.append(line)

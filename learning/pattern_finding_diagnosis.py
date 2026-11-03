@@ -124,9 +124,6 @@ class PatternFindingDiagnosis(CrossTicketDiagnosis):
             history_refs=refs,
         )
 
-    def observe_incidents(self, incidents, window, ctx):  # a _observe felülírása miatt nem használt
-        return ()
-
     def _observe(self, ctx: MeasurementContext, window: MeasurementWindow) -> Iterable[Observation]:
         definitions = [
             issue.details for issue in ctx.issues

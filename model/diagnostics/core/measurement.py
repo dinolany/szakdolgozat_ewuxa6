@@ -43,4 +43,6 @@ class Measurement:
 
     @property
     def exceeded(self) -> bool:
+        """Túllépte-e a küszöböt. A `severity is None` kizárólag ezt jelenti („mérve, küszöb alatt”): nem mérhető
+        subjectről mérés nem készül (ld. Observation)."""
         return self.severity is not None

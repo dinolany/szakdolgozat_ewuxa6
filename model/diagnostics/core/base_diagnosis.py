@@ -130,16 +130,15 @@ class BaseDiagnosis(ABC):
         return (observation for observation in self._observe(ctx, window) if observation.subject == subject)
 
     def signals(self, ctx: MeasurementContext) -> List[Tuple[Observation, SeverityLevel]]:
-        """A jóváhagyásra váró jelzések: a túllépő megfigyelések, amelyekhez még nincs issue (feladat)."""
+        """A jóváhagyásra váró jelzések: a túllépő mérések, amelyekhez még nincs issue (feladat).
+        Ugyanaz a mag, mint a `run`-é (`_measure_all`): ami itt jelzés, az jóváhagyás nélkül új issue lenne."""
         window = self.resolve_window(ctx)
-        known = {issue.subject for issue in ctx.issues if issue.diagnostic_key == self.key and not issue.is_deleted}
-        result = []
-        for observation in self._observe(ctx, window):
-            thresholds, _ = self.thresholds_for(ctx, observation.subject, observation.details)
-            severity = self.classify(observation.details, thresholds)
-            if severity is not None and observation.subject not in known:
-                result.append((observation, severity))
-        return result
+        known = self._known_issue_ids(ctx)
+        return [
+            (observation, measurement.severity)
+            for observation, measurement in self._measure_all(ctx, window)
+            if measurement.exceeded and measurement.issue_id not in known
+        ]
 
     def signal_items(self, subject: str, details: Mapping[str, Any]) -> Tuple[Tuple[str, str], ...]:
         """A jelzés leírása dimenzió-érték párokként (a tanuló kör szabályaihoz és csomópontjaihoz)."""
@@ -185,14 +184,10 @@ class BaseDiagnosis(ABC):
     def run(self, ctx: MeasurementContext) -> DiagnosticRun:
         """Teljes mérés: minden túllépés, plusz a már issue-val rendelkező subjectek küszöb alatti mérése."""
         window = self.resolve_window(ctx)
-        known = {
-            issue.issue_id for issue in ctx.issues
-            if issue.diagnostic_key == self.key and not issue.is_deleted
-        }
+        known = self._known_issue_ids(ctx)
         measurements = []
         suppressions = getattr(ctx.knowledge, "suppressions", ())
-        for observation in self._observe(ctx, window):
-            measurement = self._to_measurement(observation, ctx, window)
+        for observation, measurement in self._measure_all(ctx, window):
             # jóváhagyásos módban új issue nem nyílik; a meglévő feladatok mérése folytatódik
             if measurement.issue_id in known:
                 measurements.append(measurement)
@@ -202,6 +197,15 @@ class BaseDiagnosis(ABC):
                                                           suppressions)):
                     measurements.append(measurement)
         return DiagnosticRun(self.key, self.window_type, ctx.trigger, ctx.measured_at, window, measurements)
+
+    def _measure_all(self, ctx: MeasurementContext, window: MeasurementWindow) -> Iterable[Tuple[Observation, Measurement]]:
+        """A közös mag: minden megfigyelés és a belőle besorolt mérés. Hívja: run, signals."""
+        for observation in self._observe(ctx, window):
+            yield observation, self._to_measurement(observation, ctx, window)
+
+    def _known_issue_ids(self, ctx: MeasurementContext) -> FrozenSet[str]:
+        """A diagnosztika meglévő (nem törölt) issue-i: ezek mérése mindig folytatódik. Hívja: run, signals."""
+        return frozenset(issue.issue_id for issue in ctx.issues if issue.diagnostic_key == self.key and not issue.is_deleted)
 
     def remeasure(self, issue: Issue, ctx: MeasurementContext) -> DiagnosticRun:
         """Egyetlen issue újramérése a jelenlegi paraméterekkel.

@@ -47,9 +47,6 @@ class SimilarDescriptionDiagnosis(CrossTicketDiagnosis):
     def describe(self, subject: str, details: Mapping[str, Any]) -> str:
         return f"{details.get('count', 0)} ticket nyílt azonos rövid leírással: „{details.get('description', subject)}”."
 
-    def observe_incidents(self, incidents, window, ctx):  # a _observe felülírása miatt nem használt
-        return ()
-
     def _observe(self, ctx: MeasurementContext, window: MeasurementWindow) -> Iterable[Observation]:
         groups: Dict[str, List[Tuple[str, FieldChange]]] = defaultdict(list)
         for incident in ctx.incidents:

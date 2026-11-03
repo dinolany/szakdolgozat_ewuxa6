@@ -81,9 +81,6 @@ class BacklogAgingDiagnosis(CrossTicketDiagnosis):
             (aged if self._age(stint, ctx)[0] >= threshold else other).append((timeline.incident_id, stint.index))
         return units
 
-    def observe_incidents(self, incidents, window, ctx):  # a _observe felülírása miatt nem használt
-        return ()
-
     def _observe(self, ctx: MeasurementContext, window: MeasurementWindow) -> Iterable[Observation]:
         threshold = self.thresholds(ctx)["moderate_age_hours"]
         waiting: Dict[str, List[Tuple[TicketTimeline, Stint, float]]] = defaultdict(list)

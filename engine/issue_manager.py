@@ -11,12 +11,11 @@ from model.issue_state import IssueState
 USER_STATES = {
     IssueState.RESOLVED,
     IssueState.SUPPRESSED,
-    IssueState.DECLINED,
     IssueState.ARCHIVED,
     IssueState.DELETED,
 }
 # Ezeknél a mérési adatok sem frissülnek
-FROZEN_STATES = {IssueState.DECLINED, IssueState.ARCHIVED, IssueState.DELETED}
+FROZEN_STATES = {IssueState.ARCHIVED, IssueState.DELETED}
 # A mérés által vezérelt állapotok
 MEASURED_STATES = {IssueState.ACTIVE, IssueState.NOT_RELEVANT}
 

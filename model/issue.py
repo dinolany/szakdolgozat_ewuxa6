@@ -130,7 +130,7 @@ class Issue:
         self.details["reassignment_count"] = value
 
     def refresh(self, measurement: "Issue") -> None:
-        if self.state in {IssueState.DECLINED, IssueState.ARCHIVED}:
+        if self.state is IssueState.ARCHIVED:
             return
         self.severity = measurement.severity
         
@@ -212,11 +212,11 @@ class Issue:
             self.state = IssueState.NOT_RELEVANT
 
     def resolve(self) -> None:
-        if self.state not in {IssueState.DECLINED, IssueState.ARCHIVED, IssueState.DELETED}:
+        if self.state not in {IssueState.ARCHIVED, IssueState.DELETED}:
             self.state = IssueState.RESOLVED
 
     def suppress(self) -> None:
-        if self.state not in {IssueState.DECLINED, IssueState.ARCHIVED, IssueState.DELETED}:
+        if self.state not in {IssueState.ARCHIVED, IssueState.DELETED}:
             self.state = IssueState.SUPPRESSED
 
     def activate(self) -> None:
@@ -227,12 +227,8 @@ class Issue:
         self.is_deleted = True
         self.state = IssueState.DELETED
 
-    def decline(self) -> None:
-        if self.state in {IssueState.ACTIVE, IssueState.NOT_RELEVANT}:
-            self.state = IssueState.DECLINED
-
     def archive(self) -> None:
-        if self.state in {IssueState.NOT_RELEVANT, IssueState.DECLINED}:
+        if self.state is IssueState.NOT_RELEVANT:
             self.state = IssueState.ARCHIVED
 
     def to_dict(self) -> Dict[str, Any]:

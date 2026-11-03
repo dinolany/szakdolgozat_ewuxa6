@@ -56,9 +56,6 @@ class TicketVolumeDiagnosis(CrossTicketDiagnosis):
         return (f"{details.get('openings', 0)} ticket nyílt; a korábbi {details.get('history_days', 0)} nap alapján "
                 f"{details.get('expected', 0):.1f} volt várható ({details.get('deviation_percent', 0):+.0f}%).")
 
-    def observe_incidents(self, incidents, window, ctx):  # a _observe felülírása miatt nem használt
-        return ()
-
     def _observe(self, ctx: MeasurementContext, window: MeasurementWindow) -> Iterable[Observation]:
         if window.start is None or window.end is None:
             return []

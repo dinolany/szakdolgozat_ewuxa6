@@ -119,9 +119,6 @@ class FeatureUsageDiagnosis(CrossTicketDiagnosis):
             result[f"{feature}|{ALL_GROUPS}"] = ([(o.incident_id, o.stint) for o in relevant], [])
         return result
 
-    def observe_incidents(self, incidents, window, ctx):  # a _observe felülírása miatt nem használt
-        return ()
-
     def _observe(self, ctx: MeasurementContext, window: MeasurementWindow) -> Iterable[Observation]:
         params = self.thresholds(ctx)
         known, levels = ctx.knowledge.availability, ctx.knowledge.levels

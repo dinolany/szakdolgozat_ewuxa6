@@ -60,7 +60,7 @@ DiagnosticRegistry.execute(trigger, measured_at, incidents, küszöbök, ablakok
 | Család | Mit vizsgál | A diagnosztika feladata | Ablak |
 |---|---|---|---|
 | `SingleTicketDiagnosis` | egy ticket életútját | `accumulate(incident, ctx)`: időrendben lépésenként a details (a küszöbátlépés eseménye `trigger_ref` lesz) | NONE |
-| `CrossTicketDiagnosis` | több ticket közös mintázatát | `_observe(ctx, window)` (vagy `observe_incidents`): subjectenként egy Observation | SLIDING / TUMBLING / SNAPSHOT |
+| `CrossTicketDiagnosis` | több ticket közös mintázatát | `_observe(ctx, window)`: subjectenként egy Observation | SLIDING / TUMBLING / SNAPSHOT |
 | `CrossIssueDiagnosis` | más diagnosztikák issue-it (2. fázis) | `observe_issues(issues, window, ctx)` | SNAPSHOT |
 
 Minden diagnosztika megadja még: `key`, `config_key` (a paraméterek kulcsa), `issue_category`,
@@ -78,7 +78,7 @@ Régi formátumú tárolt issue-k megtartásához felülírható az `issue_id_fo
 | `TUMBLING` | igazított, egymást nem fedő vödrök; minden vödör külön előfordulás | korábbi vödör issue-ja: OUTDATED |
 
 Issue-állapotok (`model/issue.py`): ACTIVE (túllépés), NOT_RELEVANT (mérve, küszöb alatt),
-OUTDATED (időablakos, elmúlt), valamint a felhasználói állapotok (RESOLVED, SUPPRESSED, DECLINED,
+OUTDATED (időablakos, elmúlt), valamint a felhasználói állapotok (RESOLVED, SUPPRESSED,
 ARCHIVED, DELETED), amelyekhez a mérés nem nyúl.
 
 ## Issue = feladat: jóváhagyásos mód

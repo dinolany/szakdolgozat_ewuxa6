@@ -126,6 +126,9 @@ tények, a normák, a csomópontok és az almérések ugyanúgy építhetnek, mi
     `config/paths.py`; a futás adatai a `data/` alatt;
   - egy osztály egy fájl; a körkörös importok feloldva (pl. a feature_usage felismerői külön modulban);
   - a tesztek a csomagszerkezet szerint, közös tesztadatok a `tests/support/` alatt.
+- 2026-10-29 – mérési réteg: a halmaz-család használatlan jegykiválasztása törölve, a `signals` és a `run` közös
+  magon (`_measure_all`), a mérés szerződése a docstringekben; a `declined` issue-állapot törölve (egyik út sem
+  állította be); az architektúra-leírásban az issue születése és a mérési réteg.
 - Következik: felhasználói leírás és a validálási fejezet (szintetikus adat, tanulási szimuláció, korlátok).
 
 ## Sorrend (megbeszélt)
@@ -137,6 +140,8 @@ tények, a normák, a csomópontok és az almérések ugyanúgy építhetnek, mi
 3. **Felület összevonása:** kétlépéses döntés („Mit tanuljon ebből?” mint mag), Javaslatok, Tudás.
 4. Később: valódi adatbázis a JSON helyett (vállalati környezetben); ServiceNow `task_sla` és `cmn_schedule` átvétele
    (az SLA kész eredményét átvenni, nem újraszámolni; a munkarend a tanult munkaidő helyére).
+5. Később, valós futásnál: **időszakos archiválás.** A felgyűlő régi issue-k `archived` állapotba (a mérés nem
+   nyúl hozzájuk). Eldöntendő, mely állapotokból és mennyi idő után; ma az `Issue.archive` csak not_relevantból lép.
 
 ## Nyitott kérdések
 

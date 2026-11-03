@@ -131,7 +131,7 @@ szabályokat egy visszahívón át kéri (`IncidentAnalyzer.rule_provider`). Az 
 | Adatlap (profile) | `learning/mining/profiles.py` (`TicketProfile`, `ProfileSet`) | Egy egység mezői (dimenziók) és mért értékei egy pillanatban; a mintakeresés és az elemzés ugyanebből dolgozik. |
 | Minta, jelölt | `learning/mining/contrast_mining.py`, `learning/state/candidate.py` | Mezőérték-kombináció, ahol az érintettek aránya szignifikánsan magasabb; jelöltként az elemző elé kerül. |
 | Jelzés | `kind="signal"` jelölt | Jóváhagyásos módban futó detektor túllépése, ugyanúgy jelöltként. |
-| Issue (feladat) | `model/issue.py`, `model/issue_state.py` | Egy detektor egy túllépése; állapotai: active, not_relevant, outdated, resolved, suppressed, declined, archived, deleted. |
+| Issue (feladat) | `model/issue.py`, `model/issue_state.py` | Egy detektor egy túllépése; állapotai: active, not_relevant, outdated, resolved, suppressed, archived, deleted. |
 | Döntés | `learning/state/decision.py` | Az elemző (vagy egy almérés) döntése egy jelöltről. |
 | Szabály | `learning/state/rule.py` | Datalog-szerű elvető vagy kiemelő szabály mintaelemekre (`*` = a mező bármely értéke), mérésekre szűkíthető; a kemény szabály az erős jelöltet is rejti. |
 | Tény | `model/knowledge/fact.py` | A világról szóló állítás (szint, munkaidő, nem dolgozik, elérhetőség, nem elvárt funkció). |
@@ -141,6 +141,11 @@ szabályokat egy visszahívón át kéri (`IncidentAnalyzer.rule_provider`). Az 
 
 ## 4. A valós idejű kör: eseménycsomagtól a feladatig
 
+### 4.1 Eseményfolyam csak a gyári detektorokkal
+
+A detektorok önállóan nyitnak issue-t; a tanuló modul ebben a körben nem dönt semmiről. A kör végén az issue-k
+lezárása (tanulsággal) és a felületi műveletek tudást hoznak létre, és ez a következő csomag mérését már befolyásolja.
+
 ```mermaid
 sequenceDiagram
   participant S as Ütemező
@@ -149,18 +154,279 @@ sequenceDiagram
   participant A as Elemző
   participant D as Detektorok
   participant I as IssueManager
+  participant U as Elemző (ember)
   participant T as Tanuló szolgáltatás
   S->>E: process_events(csomag)
   E->>R: transaction()
   E->>E: HistoryLine-ok, incidensenként Incident.apply_event
   E->>A: analyze_batch(érintett incidensek)
-  A->>A: KnowledgeView (szintek, munkaidő, küszöbök, elnyomások)
+  A->>A: KnowledgeView (szintek, munkaidő, küszöbök, elvető szabályok)
   A->>D: registry.execute (1. fázis: jegy-detektorok, 2. fázis: issue-detektorok)
-  D->>I: DiagnosticRun -> apply_run
-  I-->>R: issue-k létrehozása / frissítése / újranyitása
-  E->>T: after_batch (ha új virtuális nap kezdődött)
-  T-->>R: napi tanuló kör
+  D->>D: _observe → Measurement (classify: severity vagy None)
+  D->>I: DiagnosticRun → apply_run
+  I->>R: issue nyitása / frissítése / not_relevant / outdated, issue_history
+  R-->>U: Feladatok a felületen
+  U->>I: resolve / suppress / pin / delete (apply_action)
+  U->>T: lezárás tanulsággal (close_issue_with_lesson)
+  T->>I: resolve + update_details (tanulság, utókövetés)
+  T->>T: tudás: szabály, tény, szűkebb küszöb, tipp címke
+  T-->>A: a következő csomagnál: KnowledgeView + rule_provider
 ```
+
+### 4.2 Eseményfolyam a tanuló körrel
+
+Itt két út vezet issue-hoz a detektor saját nyitásán kívül: a jóváhagyásos módú detektor jelzése és a mintakeresés
+jelöltje. Mindkettő a Jelöltsoron át, az elemző „Feladat” döntésével lesz issue, és az issue-t ekkor is az
+`IssueManager` nyitja.
+
+```mermaid
+sequenceDiagram
+  participant S as Ütemező
+  participant E as Eseményfeldolgozó
+  participant A as Elemző + detektorok
+  participant I as IssueManager
+  participant R as Repository
+  participant T as Tanuló szolgáltatás
+  participant U as Elemző (ember)
+  S->>E: process_events(csomag)
+  E->>A: analyze_batch
+  A->>I: apply_run (jóváhagyásos detektor: csak a meglévő issue-it méri)
+  I->>R: issue-k
+  E->>T: after_batch (új virtuális nap)
+  R-->>T: incidensek, issue-k (csak olvas)
+  T->>T: run_discovery: adatlapok, mintakeresés, romlás
+  T->>A: _ingest_signals: a jóváhagyásos detektorok jelzései
+  T->>T: jelöltek: szabályok, tipp, sorrend, almérések, próbák
+  T->>I: update_details (hozzácsapás, utókövetés, ismert hiba)
+  T-->>U: Jelöltsor
+  U->>T: döntés: Feladat / Most nem / Bontsd tovább / Elnyomás
+  alt Feladat, mintakeresésből
+    T->>A: PATTERN_FINDING: seed_run (első mérés)
+    T->>I: apply_run, küszöb alatt open_issue(NOT_RELEVANT)
+  else Feladat, jelzésből
+    T->>A: accept_signal (a detektor saját mérése)
+    T->>I: apply_run
+  end
+  I->>R: új issue
+  Note over A,I: a következő csomagoktól az issue-t a detektora méri tovább (4.1)
+  U->>T: lezárás tanulsággal
+  T->>I: resolve + update_details
+  T->>T: tudás → a mérés és a mintakeresés is olvassa
+```
+
+### 4.3 A mérési réteg: a detektor és az issue között (`model/diagnostics/core`)
+
+A detektor nem nyit issue-t, és nem is tud róla. Csak annyit mond meg, hogy **mit lát** és **mitől baj**. A kettő
+között egy mérési réteg áll, amely a detektor megállapításából egységes, besorolt mérést készít. A mérésből az
+`IssueManager` csinál issue-t. A rétegen át csak **változtathatatlan értékobjektumok** (`frozen` dataclass) mennek,
+így egy futás semmit nem tud elrontani a másikban, és a lépések külön-külön tesztelhetők.
+
+Ki mit csinál egy futásban, sávonként (oszloponként) egy szereplő, a lépések felülről lefelé, sorszámozva.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant AN as IncidentAnalyzer
+  participant RG as DiagnosticRegistry
+  participant BD as BaseDiagnosis<br/>(mérési réteg)
+  participant DT as Detektor<br/>(saját kód)
+  participant IM as IssueManager
+  AN->>AN: küszöbök (thresholds.json), KnowledgeView
+  AN->>RG: execute(trigger, küszöbök, tudás)
+  RG->>RG: kik futnak: trigger, kikapcsoltak, fázis
+  loop detektoronként, fázissorrendben
+    RG->>BD: run(MeasurementContext)
+    BD->>BD: resolve_window
+    BD->>DT: _observe(ctx, window)
+    DT-->>BD: Observation-ök, küszöb nélkül
+    loop megfigyelésenként (_to_measurement)
+      BD->>BD: thresholds_for: kézi > tanult > globális
+      BD->>DT: classify, describe
+      DT-->>BD: severity vagy None, leírás
+      BD->>BD: Measurement: azonosító, ablak, paraméterek
+    end
+    BD->>BD: szűrés: van issue / új túllépés / eldob
+    BD-->>RG: DiagnosticRun
+    RG->>IM: apply_run(run)
+    IM->>IM: nyit, active, not_relevant, outdated
+  end
+```
+
+A szűrés (a `run` utolsó lépése):
+
+| Mérés | Mi lesz vele |
+|---|---|
+| a detektornak már van issue-ja erre | mindig továbbmegy, küszöb alatt is (az állapotot ez vezérli) |
+| új túllépés | továbbmegy, ha a detektor nincs jóváhagyásos módban, és nincs rá tanult elvető szabály |
+| új túllépés jóváhagyásos módban | itt kimarad; a napi tanuló kör `signals()`-szal jelzésként veszi fel a Jelöltsorra |
+| új, küszöb alatt | eldobva |
+
+A detektor két ponton szól bele: **mit mér** (`_observe`) és **mitől baj** (`classify`, `describe`). Minden más a
+mérési rétegé, az előkészítés az `IncidentAnalyzer`-é és a `DiagnosticRegistry`-é, az issue sorsa az
+`IssueManager`-é.
+
+**A négy objektum:**
+
+| Objektum | Mit hordoz | Ki készíti |
+|---|---|---|
+| `MeasurementContext` | A futás bemenete: trigger, mérési pillanat (`measured_at`, virtuális idő), incidensek, a látható issue-k (a kikapcsolt detektoroké nem), a detektor saját küszöbei és ablakparaméterei, a csomag eseményei, a tudás (`KnowledgeView`), és hogy jóváhagyásos-e a mód (`review`). | a nyilvántartás (`_base_context` → `for_diagnostic`) |
+| `Observation` | Amit a detektor egy subjectről megállapít, **küszöbtől függetlenül**: `details` (a mért számok), `affected`, `history_refs`, `trigger_ref` (a küszöbátlépés eseménye). | a detektor `_observe`-ja |
+| `Measurement` | A besorolt megfigyelés: identitás (`issue_id`, `occurrence_key`, `subject`), `severity`, metrika, leírás, a felhasznált küszöb forrása, az ablak és a paraméterek pillanatképe. | a réteg `_to_measurement`-je |
+| `DiagnosticRun` | Egy futás mérései, az ablak, és a hatókör (`scope`): `None` esetén a detektor minden issue-ja, különben csak a felsoroltak. | a réteg `run`, `remeasure`, `accept_signal` metódusai |
+
+**Egy mérés lépései:**
+
+1. **Ablak** (`resolve_window`): a mérési pillanatból és az ablaktípusból. NONE: a jegy teljes élete. SNAPSHOT:
+   állapotkép. SLIDING: `[most − visszatekintés, most]`. TUMBLING: az utoljára lezárult, egész órához (stb.)
+   igazított vödör.
+2. **Megfigyelés** (`_observe`, a detektor vagy a családja): subjectenként egy `Observation`, küszöb nélkül.
+3. **Küszöb az esetre** (`thresholds_for`): a megfigyelés entitásai (`details["entity"]`: csoport, útvonal,
+   service…) alapján paraméterenként a kézi szűkebb, a tanult szűkebb, végül a globális küszöb.
+4. **Besorolás és leírás** (`classify`, `describe`): a detektor tiszta függvényei; csak a `details`-ből és a
+   küszöbökből dolgoznak.
+5. **Mérés összeállítása** (`_to_measurement`):
+   - az azonosító (`occurrence_key`, `issue_id`);
+   - a metrika;
+   - a felhasznált szűkebb küszöb és a forrása (`threshold_source`, `thresholds_used`), ha nem a globális döntött;
+   - az ablak és a paraméterek pillanatképe.
+6. **Szűrés** (`run`):
+   - a detektor meglévő issue-jának mérése mindig továbbmegy, küszöb alatt is, mert az állapotot ez vezérli;
+   - új túllépés csak akkor megy tovább, ha a detektor nincs jóváhagyásos módban, és nem illik rá tanult elvető
+     szabály;
+   - a küszöb alatti, issue nélküli mérés elmarad.
+
+**Szerződés** (`observation.py`, `measurement.py`):
+
+- **A `severity is None` csak azt jelenti, hogy a mérés küszöb alatt maradt.** Nem mérhető subjectről (nincs adat,
+  nem tartozik az ablakba) a detektor nem ad megfigyelést, így a „nem mérhető” és a „rendben van” nem keveredik.
+- **A `details` szabad kulcsú, néhány foglalt kulccsal:**
+  - `entity`: a szűkebb küszöbhöz és az elvető szabályhoz;
+  - `groups`: az issue csoportlistája;
+  - a réteg tölti: `threshold_source`, `thresholds_used`;
+  - az issue tölti: `measured_exceeded` és a tanuló kör kulcsai (`KEPT_DETAIL_KEYS`).
+
+**Belépési pontok.** Négy belépési pont van, mind ugyanarra a magra épül (`_observe` → `_to_measurement`, a `run`
+és a `signals` közös része a `_measure_all`):
+
+| Belépés | Mikor | Eredmény |
+|---|---|---|
+| `run(ctx)` | csomag, kézi futtatás, ki- és bekapcsolás | a teljes mérés `DiagnosticRun`-ja |
+| `remeasure(issue, ctx)` | paraméterváltozás után az aktív issue-ra | egy mérés az issue saját, átméretezett ablakában; a hatókör csak ez az issue |
+| `signals(ctx)` | a tanuló kör napi lépése, jóváhagyásos detektoron | a túllépések, amelyekhez nincs issue; pontosan azok, amelyekből jóváhagyás nélkül issue lenne |
+| `accept_signal(ctx, subject)` | „Feladat” egy jelzésen | egy subject mérése `DiagnosticRun`-ként, a jóváhagyásos módot megkerülve |
+
+A PATTERN_FINDING ehhez egy ötödiket ad (`seed_run`): az elfogadott minta első mérését, amikor az issue még nem
+létezik, így a definíciót sem lehet még az issue-ból olvasni.
+
+### 4.4 Az issue objektum felépítése (`model/issue.py`)
+
+Az issue mindig egy mérésből születik (`Issue.from_measurement`, új epizóddal), és minden későbbi mérés ugyanígy
+frissíti (`issue.apply_measurement`). Az issue a mérés életciklussal bővített, tárolt változata.
+
+**Az azonosító.** `issue_id = "ISSUE-<diagnostic_key>-<sha1(occurrence_key)[:12]>"` (`make_issue_id`, az egyetlen
+azonosító-képző). Az `occurrence_key` alapból a subject (pl. egy csoport vagy egy jegy). TUMBLING ablaknál
+`subject|vödör kezdete`, tehát vödrönként külön issue jön. Ugyanaz a jelenség ezért mindig ugyanazt az issue-t
+frissíti, nem nyit újat.
+
+| Mezőcsoport | Mezők | Honnan | Mikor íródik |
+|---|---|---|---|
+| Identitás | `issue_id`, `diagnostic_key`, `occurrence_key`, `subject` | a mérés | nyitáskor; utána nem változik |
+| Besorolás | `category`, `family`, `affected_type` (incidens / szakasz / issue) | a detektor osztályszintű adatai | minden mérésnél |
+| Eredmény | `severity`, `metric_value`, `description` | `classify`, `metric_value`, `describe` | minden mérésnél |
+| Bizonyíték | `affected_objects`, `history_refs`, `groups` | az `Observation` | minden mérésnél (felülírja) |
+| Mérési keret | `measured_at`, `window_type`, `window_start`, `window_end`, `params_snapshot` | a futás ablaka és paraméterei | minden mérésnél |
+| Epizód | `trigger`, `first_detected_at`, `trigger_ref` | a nyitó mérés | csak új epizódnál: nyitáskor és újranyitáskor |
+| Életciklus | `state`, `is_pinned`, `is_deleted`, `params_changed`, `updated_at` | az `IssueManager` | állapotváltáskor, felületi műveletnél |
+| Részletek | `details` | a detektor adatai + a tanuló kör adatai | lásd lent |
+
+**A `details` két forrásból áll.** A detektor a saját adatait adja (pl. csoportszám, lánc, a használt szűkebb küszöb:
+`threshold_source`, `thresholds_used`), és ezeket minden mérés lecseréli. A tanuló kör és az elemző adatai
+(`KEPT_DETAIL_KEYS`: `lesson`, `follow_up`, `attached`, `attached_news`, `known_fault_quiet_since`,
+`known_fault_returned_at`) az újramérésnél megmaradnak. Ezek mellé a mérés beírja a `measured_exceeded` jelzőt.
+Erre azért van szükség, mert lezárt issue-nál a `severity` nem mondja meg, hogy a legutóbbi mérés túllépett-e. A
+PATTERN_FINDING issue-nál a `details` hordozza magát a mintadefiníciót is (`measure`, `pattern`, `bad_threshold`,
+`candidate_id`).
+
+**Állapotok** (`model/issue_state.py`) három csoportban:
+
+| Csoport | Állapot | Ki állítja |
+|---|---|---|
+| Mérés vezérli | `active` (túllépés), `not_relevant` (mérve, küszöb alatt), `outdated` (időablakos mérés, kiesett az ablakból) | `apply_run` |
+| Az elemző döntése | `resolved`, `suppressed`, `deleted` | `apply_action` (felület, tanulságos lezárás) |
+| Befagyasztott | `archived` | a modell ismeri (`archive`, not_relevant állapotból); a mérés nem nyúl hozzá. Jelenleg egyik út sem állítja be: a valós futásban felgyűlő issue-k időszakos archiválásához van fenntartva. |
+
+```mermaid
+stateDiagram-v2
+  [*] --> active: túllépés
+  [*] --> not_relevant: elfogadott minta küszöb alatt
+  active --> not_relevant: küszöb alatt
+  not_relevant --> active: újra túllép (új epizód)
+  active --> outdated: kiesett az ablakból
+  not_relevant --> outdated: kiesett az ablakból
+  outdated --> active: újra túllép (új epizód)
+  active --> resolved: elemző / tanulság
+  active --> suppressed: elemző
+  resolved --> active: ismert hiba visszatért,<br/>utókövetés: nem javult
+  suppressed --> active: activate
+  resolved --> deleted
+  active --> deleted
+```
+
+Az állapotátmeneteket maga az objektum őrzi (`mark_outdated`, `mark_not_relevant`, `resolve`, `suppress`,
+`activate`, `delete`): mindegyik csak a megengedett állapotokból lép, a törölthöz pedig nem nyúl. Minden változás egy
+sort kap az `issue_history`-ban (régi és új állapot, ok, metrika, mérési idő). Ebből rajzolja a felület az issue
+történetét, és ebből számol a backtest.
+
+### 4.5 Az IssueManager feladata (`engine/issue_manager.py`)
+
+Az `IssueManager` az **egyetlen író** az issue-kon. A detektorok csak méréseket adnak vissza (`DiagnosticRun`), a
+tanuló modul csak olvassa az adatbázist, és minden issue-változást ezen az osztályon át kér. Így az életciklus
+szabályai egy helyen vannak, és minden változás bekerül az `issue_history`-ba.
+
+| Metódus | Hívja | Mit csinál |
+|---|---|---|
+| `apply_run(db, run, reason)` | a nyilvántartás minden futás után; a tanuló kör elfogadáskor | Egy futás átvezetése a detektor **saját** issue-ira (`diagnostic_key` szerint). |
+| `apply_param_change(db, diagnostic, ctx, reason)` | az elemző küszöb- vagy ablakváltozáskor | Ablak nélkül teljes újramérés. Időablakos mérésnél az aktív issue-k a saját ablakukban mérődnek újra; a not_relevant és outdated issue-k csak `params_changed` jelzést kapnak. Utána a mostani ablak teljes mérése következik az új küszöbbel. |
+| `apply_action(db, ids, action, reason)` | felület, tanulságos lezárás, utókövetés, ismert hiba | Az elemző műveletei: `resolve`, `suppress`, `activate`, `delete`, `pin`, `unpin`. |
+| `open_issue(db, measurement, state, reason)` | `promotion.promote_finding` | Nyitás megadott állapotban akkor is, ha a mérés nem lépte át a küszöböt, mert az elemző döntött róla. Meglévő issue-hoz nem nyúl. |
+| `update_details(db, id, values, remove)` | a tanuló szolgáltatás | A tanuló kör adatainak írása a `details`-be, állapotváltás nélkül. |
+
+**Az `apply_run` szabályai**, mérésenként:
+
+1. **Nincs még issue:** ha a mérés túllép, `Issue.from_measurement` új issue-t nyit `active` állapotban és új
+   epizóddal; ha nem lép túl, nem történik semmi.
+2. **Befagyasztott vagy törölt issue** (`archived`, `deleted`): nem nyúl hozzá.
+3. **Az elemző döntésével lezárt issue** (`resolved`, `suppressed`): frissülnek a mérési adatok, az állapot nem
+   változik. Kivétel az **ismert hiba**: a „valódi hiba” tanulsággal lezárt issue, ha a mérése egyszer küszöb alá
+   csendesedett (`known_fault_quiet_since`), majd újra túllép, új epizóddal újranyílik (`known_fault_returned_at`).
+4. **Mérés vezérelte issue:** túllépésnél `active`, és ha előtte nem volt az, új epizódot kap. Küszöb alatt
+   `not_relevant` lesz.
+
+Ezután jönnek a futás **hatókörébe tartozó, de a mérésből hiányzó** issue-k (`_absent_state`):
+
+- SLIDING ablaknál `outdated` (kiesett az ablakból);
+- TUMBLING ablaknál `outdated`, ha egy már lezárt vödörhöz tartozik;
+- ablak nélküli mérésnél `not_relevant`.
+
+A hatókör alapból a detektor összes issue-ja; célzott újramérésnél (`remeasure`, `accept_signal`) csak az érintett
+issue.
+
+**Ami nem az `IssueManager` dolga:** hogy mely mérések jutnak el egyáltalán az `apply_run`-ig (jóváhagyásos mód,
+elvető szabály, küszöb alatti új eset). Ezt a mérési réteg szűri (4.3, 6. lépés).
+
+### 4.6 Az issue nyitásának útjai
+
+| Út | Kiváltja | Lánc | Kezdőállapot |
+|---|---|---|---|
+| Detektor túllépése | eseménycsomag, kézi futtatás, paraméterváltozás | `BaseDiagnosis.run` → `apply_run` | `active` |
+| Elfogadott jelzés | „Feladat” egy jóváhagyásos detektor jelzésén | `DiscoveryService._accept_signal` → `diagnostic.accept_signal` → `apply_run` | `active` |
+| Elfogadott minta | „Feladat” egy mintakeresés-jelölten | `promote_finding` → `PatternFindingDiagnosis.seed_run` → `apply_run`, küszöb alatt `open_issue` | `active` vagy `not_relevant` |
+| Újranyitás | újra túllépő mérés, ismert hiba, „nem javult” utókövetés, `activate` | `apply_run` vagy `apply_action` | `active`, új epizóddal |
+
+A nyitás után minden issue-t a saját detektora mér tovább minden csomagnál, ugyanazokkal a szabályokkal (4.5). Ez
+igaz az elfogadott jelzésből és mintából nyílt issue-ra is.
+
+### 4.7 A kör szereplői
 
 - **Eseményfeldolgozás** (`IncidentEventProcessor.process_events`): a sorokból `HistoryLine`, incidensenkénti
   csoportosítás, `Incident.apply_event` (a duplikátumot az incidens maga szűri), majd egy tranzakcióban elemzés és
@@ -168,10 +434,7 @@ sequenceDiagram
 - **Elemző** (`IncidentAnalyzer`): a detektorok nyilvántartása, a küszöbök (`storage/threshold_store.py`, `data/thresholds.json`),
   a be/ki kapcsolás és a jóváhagyásos mód; minden futáshoz friss `KnowledgeView`-t ad.
 - **Detektorok** (`model/diagnostics`): a közös keretrendszert a 6. fejezet írja le.
-- **IssueManager** (`engine/issue_manager.py`): egy futás eredményének átvezetése a detektor saját issue-ira. Túllépés: új
-  issue vagy újra aktív; küszöb alatt: not_relevant; időablakos mérésnél, ha kiesett: outdated. Az elemző döntésével
-  beállított állapotokat (resolved, suppressed…) a mérés nem írja felül; kivétel az **ismert hiba**: a „valódi hiba”
-  tanulsággal lezárt issue elcsendesedés után újra túllépve ugyanabban a csomagban újranyílik.
+- **IssueManager** (`engine/issue_manager.py`): az issue-k egyetlen írója; a szabályait a 4.5 írja le.
 
 ## 5. A tanuló kör
 
@@ -265,7 +528,7 @@ classDiagram
   }
   class CrossTicketDiagnosis {
     <<abstract>>
-    observe_incidents(incidents, window, ctx)*
+    _observe(ctx, window)*
   }
   class CrossIssueDiagnosis {
     <<abstract>>
@@ -307,18 +570,19 @@ Közös osztályattribútumok: `key` (a detektor azonosítója), `config_key` (a
 | **Az alosztály adja meg** | `threshold_definitions()`* | A küszöbök definíciója (név, alapérték, határok, leírás). |
 | | `classify(details, thresholds)`* | Besorolás a mért adatokból: súlyosság, vagy `None`, ha nincs túllépés. |
 | | `describe(subject, details)`* | Az issue szöveges leírása. |
-| | `_observe(ctx, window)`* | A mérés: megfigyelések (`Observation`) az ablakban. A család valósítja meg, és helyette a saját absztrakt metódusát kéri a detektortól. |
+| | `_observe(ctx, window)`* | A mérés: megfigyelések (`Observation`) az ablakban. A jegy- és az issue-családban a család valósítja meg, és helyette a saját absztrakt metódusát kéri; a halmaz-családban a detektor írja meg. |
 | | `window_definitions()` | Az ablak paraméterei (hossz, vödörméret); alapból üres, mert NONE és SNAPSHOT ablaknál nincs ilyen. |
 | **Paraméterek** | `thresholds(ctx)`, `window_params(ctx)`, `current_params(ctx)` | A globális küszöbök és ablakparaméterek a konfigurációból. |
 | | `thresholds_for(ctx, subject, details)` | Az adott esetre érvényes küszöb: kézi szűkebb > tanult szűkebb > globális. |
 | | `entity_items(subject, details)` | Az eset entitásai (csoport, útvonal, service…), amelyekre szűkebb küszöb vagy szabály illhet. |
 | **Futtatás** | `run(ctx)` | Teljes mérés: a túllépések és a már issue-val rendelkező esetek mérése; jóváhagyásos módban és elnyomásnál nem nyit újat. |
+| | `_measure_all(ctx, window)`, `_known_issue_ids(ctx)` | A közös mag: megfigyelés → mérés párok, és a detektor meglévő issue-i. A `run` és a `signals` ugyanebből dolgozik. |
 | | `remeasure(issue, ctx)` | Egy issue újramérése a mostani paraméterekkel, a saját ablakához igazítva. |
 | | `resolve_window(ctx)` | A mérési ablak a mérési pillanatból és az ablaktípusból. |
 | | `_to_measurement(...)` | Megfigyelés → `Measurement` (azonosító, súlyosság, leírás, a használt küszöb forrása). |
 | **Azonosítás** | `issue_id_for(occurrence)`, `occurrence_key(subject, window)` | Az issue azonosítója; TUMBLING ablaknál vödrönként külön előfordulás. |
 | | `metric_value(details)` | A fő mért szám (a `metric_key` alapján). |
-| **Tanuló körhöz** | `signals(ctx)` | Jóváhagyásos módban a túllépések, amelyekhez még nincs issue → jelöltek. |
+| **Tanuló körhöz** | `signals(ctx)` | Jóváhagyásos módban a túllépések, amelyekhez még nincs issue → jelöltek. Pontosan azok, amelyekből jóváhagyás nélkül új issue lenne (elvető szabály nélkül: azt a tanuló kör a jelöltekre maga alkalmazza). |
 | | `accept_signal(ctx, subject)` | Elfogadott jelzésből issue. |
 | | `signal_items(subject, details)` | A jelzés leírása dimenzió–érték párokként (szabályokhoz, csoportosításhoz). |
 | | `child_units(ctx)` | Almérésekhez: jelzésenként az érintett és az összehasonlító esetek; alapból nincs. |
@@ -333,8 +597,7 @@ Közös osztályattribútumok: `key` (a detektor azonosítója), `config_key` (a
 | | | `_observe` | Jegyenként egy megfigyelés: history-hivatkozások, a legutóbbi küszöbátlépés eseménye. |
 | | | `_entity(incident, ctx)` | A jegy entitásai a mérés pillanatában (csoportok, útvonal, service, alkategória). |
 | | | `signal_items` | A jegy és entitásai a tanuló körnek. |
-| `CrossTicketDiagnosis` | `family=CROSS_TICKET`, ablak: alapból SLIDING, 1. fázis | `observe_incidents(incidents, window, ctx)`* | A jegyek halmazának mérése. |
-| | | `is_eligible`, `is_activity`, `activity_events`, `incidents_in_window` | Jegykiválasztás: az ablakban releváns aktivitású, belépési feltételnek megfelelő jegyek. |
+| `CrossTicketDiagnosis` | `family=CROSS_TICKET`, ablak: alapból SLIDING, 1. fázis | `_observe(ctx, window)`* | A jegyek halmazának mérése; a jegyek kiválasztása is a detektoré. |
 | `CrossIssueDiagnosis` | `family=CROSS_ISSUE`, ablak: SNAPSHOT, 2. fázis | `observe_issues(issues, window, ctx)`* | A többi detektor issue-inak mérése (a sajátjait nem látja). |
 
 #### A konkrét detektorok (`model/diagnostics/detectors/<detektor>.py`, pl. `ping_pong.py`)
@@ -351,13 +614,15 @@ Közös osztályattribútumok: `key` (a detektor azonosítója), `config_key` (a
 | `PatternFindingDiagnosis` | halmaz, SLIDING | Az elfogadott minták folyamatos újramérése adatlapokon. | `_observe`, `seed_run` (első mérés elfogadáskor), `observe_definition`, `window_profiles` |
 | `IssueTrendDiagnosis` | issue, SNAPSHOT | Sok aktív issue egy kategóriában. | — |
 
-**Megjegyzés a halmaz-detektorokról.** Mind az öt `CrossTicketDiagnosis` közvetlenül a `_observe`-ot írja felül,
-mert maguk választják ki a jegyeket az idővonalból: nyitás ideje, nyitott szakasz, alkalmak, adatlapok. Az
-`observe_incidents`-et üresen hagyják (a kódban megjegyzés jelzi). A család jegykiválasztását (`is_eligible`,
-`activity_fields`, `incidents_in_window`) így jelenleg egyik detektor sem használja; a családból ténylegesen az
-alapbeállítás (`family`, alapablak) és a közös besorolás számít.
+**Miért nincs a halmaz-családnak saját jegykiválasztása.** A halmaz-detektorok mindegyike másképp választja ki a
+jegyeket az idővonalból (nyitás ideje, nyitott szakasz, alkalmak, adatlapok), és a legtöbbnek az ablakon kívüli
+előzmény is kell: a vödör előtti napok normája, a funkció utolsó használata. Egy közös „az ablakban aktív jegyek”
+előszűrés ezért egyiknek sem jó, így a család csak a besorolást és az alapablakot adja, az `_observe` absztrakt
+marad.
 
 ### 6.2 A futtatás
+
+Egy mérés lépéseit, a mérési objektumokat és a szűrést a 4.3 írja le; itt a futtatás keretei szerepelnek.
 
 - **Ablakok** (`core/window_type.py`, `core/measurement_window.py`): NONE (a jegy teljes élete), SNAPSHOT (állapotkép), SLIDING (csúszó), TUMBLING
   (igazított vödrök).
@@ -496,7 +761,7 @@ ablakban mutatja.
 
 - **Új gyári detektor**: a `docs/DIAGNOSTICS.md` „Új diagnosztika – ellenőrzőlista” szerint: új fájl a
   `model/diagnostics/detectors/` alá, egy osztály a három család egyikéből; `threshold_definitions`, `classify`,
-  `describe`, és a család absztrakt metódusa (`accumulate`, `observe_incidents` vagy `observe_issues`); regisztrálás
+  `describe`, és a család absztrakt metódusa (`accumulate`, `_observe` vagy `observe_issues`); regisztrálás
   az `engine/analyzer.py`-ban. Ha jóváhagyásos módban is fut, adjon `signal_label`-t, gazdag `signal_items`-t, és ha
   lehet, `child_units`-ot. A tesztje: `tests/model/diagnostics/test_<detektor>.py`.
 - **Új mérés a mintakereséshez**: `MeasureDef` a `learning/mining/measures.py`-ban, az értéke az adatlapon
